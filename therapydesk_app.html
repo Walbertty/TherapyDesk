@@ -1,0 +1,1312 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--surface-0);color:var(--text-primary)}
+.app{display:flex;height:100vh;min-height:600px;font-size:14px}
+.sidebar{width:200px;min-width:200px;background:var(--surface-1);border-right:0.5px solid var(--border);display:flex;flex-direction:column;padding:12px 0}
+.logo{padding:8px 16px 16px;font-size:15px;font-weight:500;color:var(--text-primary)}
+.logo span{color:var(--text-accent);font-size:13px;display:block;font-weight:400;margin-top:1px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;color:var(--text-secondary);transition:background .15s;font-size:13px}
+.nav-item:hover{background:var(--surface-0);color:var(--text-primary)}
+.nav-item.active{background:var(--bg-accent);color:var(--text-accent);font-weight:500}
+.nav-item i{font-size:16px}
+.nav-section{padding:12px 16px 4px;font-size:11px;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{padding:12px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)}
+.topbar-title{font-size:15px;font-weight:500}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.btn{padding:5px 12px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:transparent;color:var(--text-primary);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:4px;font-family:var(--font-sans)}
+.btn:hover{background:var(--surface-1)}
+.btn.primary{background:var(--fill-accent);border-color:var(--fill-accent);color:var(--on-accent)}
+.btn.primary:hover{opacity:.9}
+.btn.danger{background:#e24b4a;border-color:#e24b4a;color:#fff}
+.btn.danger:hover{opacity:.9}
+.content{flex:1;overflow-y:auto;padding:16px 20px}
+
+.greeting-bar{background:var(--bg-accent);border:0.5px solid var(--border-accent);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.greeting-text h2{font-size:15px;font-weight:500;color:var(--text-accent)}
+.greeting-text p{font-size:12px;color:var(--text-accent);opacity:.8;margin-top:2px}
+.greeting-pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill.green{background:#EAF3DE;color:#3B6D11}
+.pill.amber{background:#FAEEDA;color:#854F0B}
+.pill.blue{background:#E6F1FB;color:#185FA5}
+.pill.red{background:#FCEBEB;color:#A32D2D}
+.pill.gray{background:var(--surface-1);color:var(--text-muted)}
+
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.metric{background:var(--surface-1);border-radius:var(--radius);padding:12px;text-align:center}
+.metric-val{font-size:22px;font-weight:500;color:var(--text-primary)}
+.metric-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+.two-col{display:grid;grid-template-columns:1fr 320px;gap:14px}
+.card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;overflow:hidden}
+.card-head{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:500}
+
+.apt-list{padding:8px 0}
+.apt-row{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;transition:background .12s}
+.apt-row:hover{background:var(--surface-1)}
+.apt-row.selected{background:var(--bg-accent)}
+.time-col{width:42px;text-align:right;font-size:12px;font-weight:500;color:var(--text-secondary);flex-shrink:0}
+.flag{width:22px;height:16px;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.flag.br{background:#009C3B;color:#FFDF00}
+.flag.pt{background:#003F87;color:#fff}
+.apt-info{flex:1;min-width:0}
+.apt-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.apt-sub{font-size:11px;color:var(--text-muted)}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.s-green{background:#63c22a}
+.s-amber{background:#ef9f27}
+.s-red{background:#e24b4a}
+.s-gray{background:var(--text-muted)}
+
+.patient-panel{padding:14px}
+.pat-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--bg-accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--text-accent);flex-shrink:0}
+.pat-name{font-size:14px;font-weight:500}
+.pat-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.detail-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.detail-row:last-child{border:none}
+.detail-row i{font-size:14px;color:var(--text-muted);margin-top:1px;flex-shrink:0}
+.detail-lbl{color:var(--text-muted);width:70px;flex-shrink:0}
+.detail-val{color:var(--text-primary);flex:1}
+.tz-box{background:var(--surface-1);border-radius:var(--radius);padding:10px;margin:10px 0;font-size:12px}
+.tz-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.tz-big{font-size:18px;font-weight:500;color:var(--text-primary)}
+.tz-small{font-size:11px;color:var(--text-muted)}
+.action-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.action-btn{padding:6px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:transparent;color:var(--text-primary);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--font-sans)}
+.action-btn:hover{background:var(--surface-1)}
+.action-btn.whatsapp{background:#25D366;border-color:#25D366;color:#fff}
+.action-btn.whatsapp:hover{opacity:.9}
+.action-btn.danger{background:#FCEBEB;border-color:#e24b4a;color:#A32D2D}
+
+.checklist{padding:10px 14px}
+.check-section{margin-bottom:10px}
+.check-title{font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.check-item{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;cursor:pointer}
+.check-item input[type=checkbox]{accent-color:var(--fill-accent);width:13px;height:13px}
+.check-item.done label{color:var(--text-muted);text-decoration:line-through}
+
+.alert-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius);margin-bottom:6px;font-size:12px}
+.alert-item.warn{background:#FAEEDA}
+.alert-item.warn i{color:#854F0B}
+.alert-item.warn .alert-text{color:#854F0B}
+.alert-item.info{background:#E6F1FB}
+.alert-item.info i{color:#185FA5}
+.alert-item.info .alert-text{color:#185FA5}
+.alert-item.success{background:#EAF3DE}
+.alert-item.success i{color:#3B6D11}
+.alert-item.success .alert-text{color:#3B6D11}
+
+.tab-bar{display:flex;border-bottom:0.5px solid var(--border);padding:0 14px;background:var(--surface-1)}
+.tab{padding:8px 10px;font-size:12px;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--text-accent);border-bottom-color:var(--fill-accent);font-weight:500}
+
+.avail-grid{padding:10px 14px}
+.day-col{margin-bottom:8px}
+.day-lbl{font-size:11px;font-weight:500;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.slots{display:flex;gap:4px;flex-wrap:wrap}
+.slot{padding:3px 8px;border-radius:4px;background:var(--bg-success);color:#3B6D11;font-size:11px;font-weight:500;cursor:pointer}
+.slot:hover{background:#C0DD97}
+.copy-btn{width:100%;margin-top:8px;padding:7px;border-radius:var(--radius);background:#25D366;border:none;color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font-sans)}
+.copy-btn:hover{opacity:.9}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal{background:var(--surface-2);border-radius:14px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{padding:16px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:14px;font-weight:500}
+.modal-close{background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted);line-height:1}
+.modal-body{padding:20px}
+.modal-foot{padding:12px 20px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:var(--font-sans);background:var(--surface-1);color:var(--text-primary)}
+.form-row textarea{resize:vertical;min-height:70px}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:var(--fill-accent)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+.form-section{font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 10px;padding-top:10px;border-top:0.5px solid var(--border)}
+.form-section:first-child{margin-top:0;padding-top:0;border:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 16px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:2000;display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(10px);transition:all .25s}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{border-left:3px solid #63c22a}
+.toast.info{border-left:3px solid var(--fill-accent)}
+
+/* SETTINGS */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.settings-card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:16px}
+.settings-card h4{font-size:13px;font-weight:500;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.settings-card h4 i{color:var(--text-accent)}
+.integration-row{display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--surface-1);border-radius:var(--radius);margin-bottom:8px}
+.integration-info{display:flex;align-items:center;gap:10px}
+.integration-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.ig-google{background:#E8F5E9}
+.ig-wa{background:#E8F5E9}
+.ig-calendar{background:#E3F2FD}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;border-radius:20px;background:var(--border-strong);transition:.3s}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked~.toggle-slider{background:var(--fill-accent)}
+.toggle input:checked~.toggle-slider:before{transform:translateX(16px)}
+.template-box{background:var(--surface-1);border-radius:var(--radius);padding:10px;font-size:12px;line-height:1.6;white-space:pre-line;color:var(--text-secondary);border:0.5px solid var(--border)}
+.tag{display:inline-block;padding:2px 6px;background:var(--bg-accent);color:var(--text-accent);border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;margin:2px}
+.tag:hover{opacity:.8}
+
+/* PATIENTS TABLE */
+.search-bar{position:relative}
+.search-bar input{padding-left:28px}
+.search-bar i{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-muted);pointer-events:none}
+tr.pat-selected td{background:var(--bg-accent)!important}
+
+/* FOCUS MODE */
+.focus-bar{background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;color:#fff}
+.focus-timer{font-size:32px;font-weight:500;letter-spacing:2px}
+.focus-controls{display:flex;gap:8px}
+.focus-btn{padding:5px 12px;border-radius:var(--radius);border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:12px}
+.focus-btn:hover{background:rgba(255,255,255,.25)}
+
+.hidden{display:none}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px}
+.empty-state i{font-size:32px;display:block;margin-bottom:8px;opacity:.4}
+
+/* CLOCK WIDGET */
+.clock-widget{padding:10px 16px;border-top:0.5px solid var(--border);font-size:11px;color:var(--text-muted)}
+.clock-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.clock-time{font-size:13px;font-weight:500;color:var(--text-primary);font-variant-numeric:tabular-nums}
+.clock-diff{font-size:10px;color:var(--text-muted);font-style:italic;text-align:center;margin-top:4px}
+</style>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">TherapyDesk<span id="sidebar-username">Dra. Cláudia</span></div>
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showView('dashboard')" data-view="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    <div class="nav-item" onclick="showView('agenda')" data-view="agenda"><i class="ti ti-calendar"></i> Agenda</div>
+    <div class="nav-item" onclick="showView('patients')" data-view="patients"><i class="ti ti-users"></i> Pacientes</div>
+    <div class="nav-item" onclick="showView('availability')" data-view="availability"><i class="ti ti-clock"></i> Disponibilidade</div>
+    <div class="nav-section">Configurações</div>
+    <div class="nav-item" onclick="showView('settings')" data-view="settings"><i class="ti ti-settings"></i> Configurações</div>
+    <div style="flex:1"></div>
+    <div class="clock-widget">
+      <div class="clock-row"><span>🇵🇹 Portugal</span><span class="clock-time" id="clock-pt">--:--</span></div>
+      <div class="clock-row"><span>🇧🇷 Brasil</span><span class="clock-time" id="clock-br">--:--</span></div>
+      <div class="clock-diff" id="clock-diff"></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ══════════════════ DASHBOARD ══════════════════ -->
+    <div id="view-dashboard">
+      <div class="topbar">
+        <div class="topbar-title" id="dash-greeting">Olá!</div>
+        <div class="topbar-actions">
+          <button class="btn primary" onclick="openNewApt()"><i class="ti ti-plus"></i> Nova consulta</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="greeting-bar">
+          <div class="greeting-text">
+            <h2><i class="ti ti-sparkles"></i> <span id="dash-date"></span></h2>
+            <p id="dash-next-info">Carregando agenda...</p>
+          </div>
+          <div class="greeting-pills" id="dash-pills"></div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric"><div class="metric-val" id="m-today">0</div><div class="metric-lbl">Hoje</div></div>
+          <div class="metric"><div class="metric-val" id="m-week">0</div><div class="metric-lbl">Esta semana</div></div>
+          <div class="metric"><div class="metric-val" id="m-total">0</div><div class="metric-lbl">Total pacientes</div></div>
+          <div class="metric"><div class="metric-val" id="m-pending">0</div><div class="metric-lbl">A confirmar</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="card">
+            <div class="card-head">Alertas <span style="color:var(--text-muted);font-size:11px;font-weight:400">Atualizados agora</span></div>
+            <div style="padding:10px" id="dash-alerts">
+              <div class="empty-state"><i class="ti ti-check"></i>Tudo em dia!</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">Check-list do dia <span style="color:var(--text-muted);font-size:11px;font-weight:400" id="checklist-label"></span></div>
+            <div class="checklist" id="checklist-body">
+              <div class="check-section">
+                <div class="check-title">Antes da consulta</div>
+                <label class="check-item" id="chk0"><input type="checkbox" onchange="toggleCheck(0)"> <span>Abrir ficha do paciente</span></label>
+                <label class="check-item" id="chk1"><input type="checkbox" onchange="toggleCheck(1)"> <span>Abrir Google Meet</span></label>
+                <label class="check-item" id="chk2"><input type="checkbox" onchange="toggleCheck(2)"> <span>Água e fones</span></label>
+                <label class="check-item" id="chk3"><input type="checkbox" onchange="toggleCheck(3)"> <span>Ambiente silencioso</span></label>
+              </div>
+              <div class="check-section">
+                <div class="check-title">Depois da consulta</div>
+                <label class="check-item" id="chk4"><input type="checkbox" onchange="toggleCheck(4)"> <span>Registrar observações</span></label>
+                <label class="check-item" id="chk5"><input type="checkbox" onchange="toggleCheck(5)"> <span>Confirmar pagamento</span></label>
+                <label class="check-item" id="chk6"><input type="checkbox" onchange="toggleCheck(6)"> <span>Marcar retorno</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Focus mode -->
+        <div style="margin-top:14px">
+          <div class="card">
+            <div class="card-head">Modo Foco <span style="font-size:11px;font-weight:400;color:var(--text-muted)">Temporizador para sessão</span></div>
+            <div style="padding:14px">
+              <div class="focus-bar">
+                <div>
+                  <div style="font-size:11px;opacity:.8;margin-bottom:4px">⏱ Tempo de sessão</div>
+                  <div class="focus-timer" id="focus-timer">50:00</div>
+                </div>
+                <div class="focus-controls">
+                  <button class="focus-btn" onclick="focusStart()" id="focus-start-btn">▶ Iniciar</button>
+                  <button class="focus-btn" onclick="focusPause()" id="focus-pause-btn" style="display:none">⏸ Pausar</button>
+                  <button class="focus-btn" onclick="focusReset()">↺ Resetar</button>
+                  <select id="focus-duration" onchange="focusReset()" style="padding:4px 8px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;border-radius:var(--radius);font-size:11px">
+                    <option value="50">50 min</option>
+                    <option value="45">45 min</option>
+                    <option value="60">60 min</option>
+                    <option value="30">30 min</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ AGENDA ══════════════════ -->
+    <div id="view-agenda" class="hidden">
+      <div class="topbar">
+        <div class="topbar-title" id="agenda-title">Agenda</div>
+        <div class="topbar-actions">
+          <button class="btn" onclick="agendaNav(-1)"><i class="ti ti-chevron-left"></i></button>
+          <button class="btn" onclick="agendaToday()">Hoje</button>
+          <button class="btn" onclick="agendaNav(1)"><i class="ti ti-chevron-right"></i></button>
+          <button class="btn primary" onclick="openNewApt()"><i class="ti ti-plus"></i> Agendar</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-head">
+              Consultas do dia
+              <div style="display:flex;gap:6px;font-size:11px;font-weight:400">
+                <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:#009C3B;display:inline-block"></span>Brasil</span>
+                <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:#003F87;display:inline-block"></span>Portugal</span>
+              </div>
+            </div>
+            <div class="apt-list" id="apt-list">
+              <div class="empty-state"><i class="ti ti-calendar-off"></i>Sem consultas neste dia</div>
+            </div>
+            <div style="padding:8px 14px;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--text-muted);border-top:0.5px solid var(--border)">
+              <span class="status-dot s-green"></span>Confirmado
+              <span class="status-dot s-amber" style="margin-left:8px"></span>Aguardando
+              <span class="status-dot s-red" style="margin-left:8px"></span>Cancelado
+            </div>
+          </div>
+
+          <div>
+            <div class="card" id="patient-detail">
+              <div id="detail-placeholder" style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:13px">
+                <i class="ti ti-user" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3"></i>
+                Selecione uma consulta para ver detalhes
+              </div>
+              <div id="detail-content" class="hidden">
+                <div class="tab-bar">
+                  <span class="tab active" onclick="switchTab('info')">Paciente</span>
+                  <span class="tab" onclick="switchTab('tz')">Fuso</span>
+                  <span class="tab" onclick="switchTab('wa')">WhatsApp</span>
+                </div>
+                <div id="tab-info" class="patient-panel">
+                  <div class="pat-header">
+                    <div class="avatar" id="det-avatar">--</div>
+                    <div><div class="pat-name" id="det-name">-</div><div class="pat-sub" id="det-sub">-</div></div>
+                  </div>
+                  <div class="detail-row"><i class="ti ti-phone"></i><span class="detail-lbl">WhatsApp</span><span class="detail-val" id="det-wa" style="color:var(--text-accent)">-</span></div>
+                  <div class="detail-row"><i class="ti ti-currency-euro"></i><span class="detail-lbl">Valor</span><span class="detail-val" id="det-value">-</span></div>
+                  <div class="detail-row"><i class="ti ti-video"></i><span class="detail-lbl">Meet</span><span class="detail-val" id="det-meet" style="color:var(--text-accent)">-</span></div>
+                  <div class="detail-row"><i class="ti ti-notes"></i><span class="detail-lbl">Notas</span><span class="detail-val" id="det-notes">-</span></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
+                    <button class="action-btn" onclick="editSelectedPatient()"><i class="ti ti-edit"></i> Editar</button>
+                    <button class="action-btn danger" onclick="cancelApt()"><i class="ti ti-x"></i> Cancelar</button>
+                  </div>
+                </div>
+                <div id="tab-tz" class="patient-panel hidden">
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px" id="tz-apt-label">Consulta agendada</div>
+                  <div class="tz-box">
+                    <div class="tz-row">
+                      <div><div class="tz-small">🇵🇹 Portugal</div><div class="tz-big" id="det-tz-pt">--:--</div></div>
+                      <div style="color:var(--text-muted)">↔</div>
+                      <div><div class="tz-small">🇧🇷 Brasília</div><div class="tz-big" id="det-tz-br">--:--</div></div>
+                    </div>
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted);padding:4px 0" id="tz-diff-note"></div>
+                  <div style="margin-top:10px">
+                    <div style="font-size:12px;font-weight:500;margin-bottom:6px">Conversor de horário</div>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <input type="time" id="tz-input" value="14:00" style="flex:1;font-size:13px;padding:6px 8px;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:var(--surface-1);color:var(--text-primary)" onchange="convertTz()">
+                      <select id="tz-dir" style="font-size:12px;padding:6px 8px;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:var(--surface-1);color:var(--text-primary)" onchange="convertTz()">
+                        <option value="pt2br">PT → BR</option>
+                        <option value="br2pt">BR → PT</option>
+                      </select>
+                    </div>
+                    <div id="tz-result" style="margin-top:8px;padding:8px;background:var(--surface-1);border-radius:var(--radius);font-size:13px;text-align:center;font-weight:500"></div>
+                  </div>
+                </div>
+                <div id="tab-wa" class="patient-panel hidden">
+                  <textarea id="wa-msg" style="width:100%;min-height:130px;padding:10px;border:0.5px solid var(--border-strong);border-radius:8px;font-size:12px;line-height:1.7;font-family:var(--font-sans);background:var(--surface-1);color:var(--text-secondary);resize:vertical"></textarea>
+                  <div class="action-btns">
+                    <button class="action-btn whatsapp" onclick="sendWhatsApp()"><i class="ti ti-brand-whatsapp"></i> Abrir WA</button>
+                    <button class="action-btn" onclick="copyWaMsg()"><i class="ti ti-copy"></i> Copiar</button>
+                    <button class="action-btn" onclick="openReschedule()"><i class="ti ti-refresh"></i> Reagendar</button>
+                    <button class="action-btn danger" onclick="cancelApt()"><i class="ti ti-x"></i> Cancelar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ PACIENTES ══════════════════ -->
+    <div id="view-patients" class="hidden">
+      <div class="topbar">
+        <div class="topbar-title">Pacientes</div>
+        <div class="topbar-actions">
+          <div class="search-bar">
+            <i class="ti ti-search"></i>
+            <input id="patient-search" placeholder="Buscar paciente..." style="padding:5px 10px 5px 28px;font-size:12px;width:180px;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:var(--surface-1);color:var(--text-primary)" oninput="renderPatients()">
+          </div>
+          <button class="btn primary" onclick="openNewPatient()"><i class="ti ti-plus"></i> Novo paciente</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-head">Todos os pacientes <span style="color:var(--text-muted);font-weight:400;font-size:11px" id="patient-count"></span></div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="border-bottom:0.5px solid var(--border)">
+              <th style="padding:8px 14px;text-align:left;font-weight:500;color:var(--text-muted);font-size:11px">Nome</th>
+              <th style="padding:8px;text-align:left;font-weight:500;color:var(--text-muted);font-size:11px">País</th>
+              <th style="padding:8px;text-align:left;font-weight:500;color:var(--text-muted);font-size:11px">WhatsApp</th>
+              <th style="padding:8px;text-align:left;font-weight:500;color:var(--text-muted);font-size:11px">Valor</th>
+              <th style="padding:8px;text-align:left;font-weight:500;color:var(--text-muted);font-size:11px">Frequência</th>
+              <th style="padding:8px;text-align:left;font-weight:500;color:var(--text-muted);font-size:11px">Ações</th>
+            </tr></thead>
+            <tbody id="patient-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ DISPONIBILIDADE ══════════════════ -->
+    <div id="view-availability" class="hidden">
+      <div class="topbar">
+        <div class="topbar-title">Horários disponíveis</div>
+        <div class="topbar-actions">
+          <button class="btn" onclick="openBlockModal()"><i class="ti ti-ban"></i> Adicionar bloqueio</button>
+        </div>
+      </div>
+      <div class="content">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="card">
+            <div class="card-head">Esta semana</div>
+            <div class="avail-grid">
+              <div class="day-col"><div class="day-lbl">Segunda</div><div class="slots"><span class="slot" onclick="shareSlot('Segunda','09:00')">09:00</span><span class="slot" onclick="shareSlot('Segunda','11:00')">11:00</span><span class="slot" onclick="shareSlot('Segunda','15:00')">15:00</span></div></div>
+              <div class="day-col" style="margin-top:10px"><div class="day-lbl">Quarta</div><div class="slots"><span class="slot" onclick="shareSlot('Quarta','10:00')">10:00</span><span class="slot" onclick="shareSlot('Quarta','14:00')">14:00</span><span class="slot" onclick="shareSlot('Quarta','17:00')">17:00</span></div></div>
+              <div class="day-col" style="margin-top:10px"><div class="day-lbl">Sexta</div><div class="slots"><span class="slot" onclick="shareSlot('Sexta','09:00')">09:00</span><span class="slot" onclick="shareSlot('Sexta','11:30')">11:30</span></div></div>
+              <button class="copy-btn" onclick="copyAllSlots()"><i class="ti ti-brand-whatsapp"></i> Copiar todos os horários</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">Bloqueios</div>
+            <div style="padding:10px 14px">
+              <div style="display:flex;flex-direction:column;gap:6px" id="blocks-list">
+                <div class="block-item" data-id="b1" style="padding:8px 10px;background:#FCEBEB;border-radius:var(--radius);font-size:12px;color:#A32D2D;display:flex;justify-content:space-between;align-items:center"><span>🍽 Almoço · 13:00–14:00 · Diário</span><button onclick="removeBlock('b1')" style="background:none;border:none;cursor:pointer;color:#A32D2D;font-size:14px">✕</button></div>
+                <div class="block-item" data-id="b2" style="padding:8px 10px;background:#FAEEDA;border-radius:var(--radius);font-size:12px;color:#854F0B;display:flex;justify-content:space-between;align-items:center"><span>📚 Curso · 15–17 jun · 09:00–12:00</span><button onclick="removeBlock('b2')" style="background:none;border:none;cursor:pointer;color:#854F0B;font-size:14px">✕</button></div>
+                <div class="block-item" data-id="b3" style="padding:8px 10px;background:#FCEBEB;border-radius:var(--radius);font-size:12px;color:#A32D2D;display:flex;justify-content:space-between;align-items:center"><span>🏖 Férias · 1–15 ago · Dia inteiro</span><button onclick="removeBlock('b3')" style="background:none;border:none;cursor:pointer;color:#A32D2D;font-size:14px">✕</button></div>
+              </div>
+              <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">Clique em ✕ para remover um bloqueio</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ CONFIGURAÇÕES ══════════════════ -->
+    <div id="view-settings" class="hidden">
+      <div class="topbar"><div class="topbar-title">Configurações</div></div>
+      <div class="content">
+        <div class="settings-grid">
+          <!-- Perfil -->
+          <div class="settings-card">
+            <h4><i class="ti ti-user-circle"></i> Perfil</h4>
+            <div class="form-row"><label>Seu nome</label><input id="cfg-name" value="Dra. Cláudia" oninput="updateProfile()"></div>
+            <div class="form-row"><label>Duração padrão da sessão (min)</label>
+              <select id="cfg-duration">
+                <option value="45">45 min</option>
+                <option value="50" selected>50 min</option>
+                <option value="60">60 min</option>
+              </select>
+            </div>
+            <div class="form-row"><label>Moeda padrão</label>
+              <select id="cfg-currency">
+                <option value="EUR" selected>€ Euro</option>
+                <option value="BRL">R$ Real</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Integrações -->
+          <div class="settings-card">
+            <h4><i class="ti ti-plug"></i> Integrações</h4>
+            <div class="integration-row">
+              <div class="integration-info">
+                <div class="integration-icon ig-google">📅</div>
+                <div><div style="font-size:13px;font-weight:500">Google Agenda</div><div style="font-size:11px;color:var(--text-muted)">Sincronizar consultas</div></div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="tog-gcal" onchange="toggleIntegration('gcal')"><span class="toggle-slider"></span></label>
+            </div>
+            <div id="gcal-info" class="hidden" style="margin:6px 0;padding:8px;background:var(--surface-1);border-radius:var(--radius);font-size:11px;color:var(--text-muted)">
+              💡 Ao ativar, as consultas adicionadas aqui aparecerão automaticamente no Google Agenda e você receberá notificações.
+              <br><button class="btn" style="margin-top:6px;width:100%;justify-content:center" onclick="showToast('Conectando com Google...','info')"><i class="ti ti-brand-google"></i> Conectar conta Google</button>
+            </div>
+            <div class="integration-row" style="margin-top:6px">
+              <div class="integration-info">
+                <div class="integration-icon ig-wa">💬</div>
+                <div><div style="font-size:13px;font-weight:500">WhatsApp</div><div style="font-size:11px;color:var(--text-muted)">Envio de mensagens</div></div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="tog-wa" checked onchange="toggleIntegration('wa')"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template WhatsApp -->
+        <div class="settings-card" style="margin-bottom:14px">
+          <h4><i class="ti ti-message-circle"></i> Template de mensagem — WhatsApp</h4>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Use as variáveis abaixo clicando nelas para inserir automaticamente.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">
+            <span class="tag" onclick="insertTag('{nome}')">&#123;nome&#125;</span>
+            <span class="tag" onclick="insertTag('{dia}')">&#123;dia&#125;</span>
+            <span class="tag" onclick="insertTag('{hora_pt}')">&#123;hora_pt&#125;</span>
+            <span class="tag" onclick="insertTag('{hora_br}')">&#123;hora_br&#125;</span>
+            <span class="tag" onclick="insertTag('{link}')">&#123;link&#125;</span>
+          </div>
+          <textarea id="wa-template" rows="7" style="width:100%;padding:10px;border:0.5px solid var(--border-strong);border-radius:var(--radius);font-size:12px;line-height:1.7;font-family:var(--font-sans);background:var(--surface-1);color:var(--text-secondary)" onchange="saveTemplate()">Olá {nome}! 😊
+
+Sua consulta está agendada para:
+📅 {dia}
+🕒 {hora_pt} Portugal · {hora_br} Brasília
+
+Acesse pelo link: {link}
+
+Qualquer dúvida estou à disposição!</textarea>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn primary" onclick="saveTemplate()"><i class="ti ti-check"></i> Salvar template</button>
+            <button class="btn" onclick="resetTemplate()"><i class="ti ti-refresh"></i> Restaurar padrão</button>
+          </div>
+        </div>
+
+        <!-- Notificações -->
+        <div class="settings-card">
+          <h4><i class="ti ti-bell"></i> Lembretes automáticos</h4>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+              <span>Lembrar paciente 24h antes</span>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+              <span>Lembrar paciente 1h antes</span>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+              <span>Me lembrar 15 min antes</span>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+              <span>Alertar pagamentos pendentes</span>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div>
+
+<!-- ══════════════════ MODAIS ══════════════════ -->
+
+<!-- Nova consulta / Reagendar -->
+<div class="modal-overlay hidden" id="modal-apt">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-apt-title">Nova consulta</h3>
+      <button class="modal-close" onclick="closeModal('modal-apt')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">Paciente e data</div>
+      <div class="form-row">
+        <label>Paciente *</label>
+        <select id="apt-patient" onchange="onAptPatientChange()">
+          <option value="">Selecionar...</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label>Data *</label><input type="date" id="apt-date"></div>
+        <div class="form-row"><label>Hora (horário Portugal) *</label><input type="time" id="apt-time" value="10:00" onchange="updateBrTime()"></div>
+      </div>
+      <div style="padding:8px 10px;background:var(--surface-1);border-radius:var(--radius);font-size:12px;color:var(--text-muted);margin-bottom:14px" id="apt-tz-preview">🇧🇷 Brasil: calculando...</div>
+      <div class="form-section">Detalhes</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Tipo de sessão</label>
+          <select id="apt-type">
+            <option>Terapia cognitiva</option>
+            <option>Psicanálise</option>
+            <option>Terapia familiar</option>
+            <option>Sessão inicial</option>
+            <option>Acompanhamento</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Frequência</label>
+          <select id="apt-freq">
+            <option>Semanal</option>
+            <option>Quinzenal</option>
+            <option>Mensal</option>
+            <option>Único</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row"><label>Link do Google Meet</label><input type="text" id="apt-meet" placeholder="meet.google.com/xxx-yyy-zzz"></div>
+      <div class="form-row"><label>Notas da sessão</label><textarea id="apt-notes" placeholder="Observações, tópicos a abordar..."></textarea></div>
+      <div class="form-row">
+        <label>
+          <input type="checkbox" id="apt-send-wa" checked style="margin-right:6px">
+          Enviar confirmação pelo WhatsApp após salvar
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('modal-apt')">Cancelar</button>
+      <button class="btn primary" onclick="saveApt()"><i class="ti ti-check"></i> Salvar consulta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Novo/editar paciente -->
+<div class="modal-overlay hidden" id="modal-patient">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-patient-title">Novo paciente</h3>
+      <button class="modal-close" onclick="closeModal('modal-patient')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">Dados pessoais</div>
+      <div class="form-row"><label>Nome completo *</label><input type="text" id="p-name" placeholder="João Almeida"></div>
+      <div class="form-grid">
+        <div class="form-row"><label>País *</label>
+          <select id="p-country">
+            <option value="BR">🇧🇷 Brasil</option>
+            <option value="PT">🇵🇹 Portugal</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Cidade</label><input type="text" id="p-city" placeholder="São Paulo"></div>
+      </div>
+      <div class="form-row"><label>WhatsApp *</label><input type="tel" id="p-wa" placeholder="+55 11 9 8765-4321"></div>
+      <div class="form-row"><label>E-mail</label><input type="email" id="p-email" placeholder="joao@email.com"></div>
+      <div class="form-section">Atendimento</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Valor da sessão *</label><input type="number" id="p-value" placeholder="80"></div>
+        <div class="form-row"><label>Forma de pagamento</label>
+          <select id="p-payment">
+            <option>Transferência</option>
+            <option>PIX</option>
+            <option>Cartão</option>
+            <option>MBWay</option>
+            <option>Dinheiro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row"><label>Link Google Meet</label><input type="text" id="p-meet" placeholder="meet.google.com/xxx-yyy-zzz"></div>
+      <div class="form-row"><label>Notas clínicas</label><textarea id="p-notes" placeholder="Diagnóstico, histórico, preferências, observações importantes..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('modal-patient')">Cancelar</button>
+      <button class="btn primary" onclick="savePatient()"><i class="ti ti-check"></i> Salvar paciente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Adicionar bloqueio -->
+<div class="modal-overlay hidden" id="modal-block">
+  <div class="modal" style="width:360px">
+    <div class="modal-head"><h3>Adicionar bloqueio</h3><button class="modal-close" onclick="closeModal('modal-block')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><label>Descrição</label><input type="text" id="blk-desc" placeholder="Ex: Reunião, Almoço, Férias..."></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Data início</label><input type="date" id="blk-start"></div>
+        <div class="form-row"><label>Data fim</label><input type="date" id="blk-end"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label>Hora início</label><input type="time" id="blk-tstart" value="09:00"></div>
+        <div class="form-row"><label>Hora fim</label><input type="time" id="blk-tend" value="12:00"></div>
+      </div>
+      <div class="form-row"><label>Recorrência</label>
+        <select id="blk-recur">
+          <option value="once">Único</option>
+          <option value="daily">Diário</option>
+          <option value="weekly">Semanal</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('modal-block')">Cancelar</button>
+      <button class="btn primary" onclick="saveBlock()"><i class="ti ti-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let patients = [
+  {id:'p1',name:'João Almeida',country:'BR',city:'São Paulo',wa:'+55 11 9 8765-0001',email:'joao@email.com',value:'70',payment:'PIX',meet:'meet.google.com/aaa-bbb-001',notes:'Ansiedade. Prefere sessões de manhã.'},
+  {id:'p2',name:'Maria Fernandes',country:'PT',city:'Lisboa',wa:'+351 91 234 5678',email:'maria@email.pt',value:'90',payment:'MBWay',meet:'meet.google.com/aaa-bbb-002',notes:'Sessão inicial. Encaminhada por colega.'},
+  {id:'p3',name:'Carlos Rodrigues',country:'BR',city:'São Paulo',wa:'+55 11 9 8765-4321',email:'carlos@email.com',value:'80',payment:'Transferência',meet:'meet.google.com/abc-xyz',notes:'Ansiedade generalizada. Preferência por sessões mais cedo.'},
+  {id:'p4',name:'Ana Costa',country:'PT',city:'Porto',wa:'+351 93 456 7890',email:'ana@email.pt',value:'90',payment:'Transferência',meet:'meet.google.com/aaa-bbb-004',notes:'Depressão leve. Evolução positiva.'},
+  {id:'p5',name:'Pedro Lima',country:'BR',city:'Brasília',wa:'+55 61 9 9876-5432',email:'pedro@email.com',value:'70',payment:'PIX',meet:'meet.google.com/aaa-bbb-005',notes:'Psicanálise. Frequente e pontual.'},
+  {id:'p6',name:'Luísa Pereira',country:'PT',city:'Braga',wa:'+351 96 789 0123',email:'luisa@email.pt',value:'90',payment:'MBWay',meet:'meet.google.com/aaa-bbb-006',notes:'Estresse pós-traumático.'},
+];
+
+let appointments = [
+  {id:'a1',patientId:'p1',date:'2026-06-26',time:'09:00',type:'Terapia cognitiva',freq:'Semanal',status:'confirmed',meet:'meet.google.com/aaa-bbb-001',notes:''},
+  {id:'a2',patientId:'p2',date:'2026-06-26',time:'11:30',type:'Sessão inicial',freq:'Único',status:'pending',meet:'meet.google.com/aaa-bbb-002',notes:''},
+  {id:'a3',patientId:'p3',date:'2026-06-26',time:'14:00',type:'Terapia familiar',freq:'Quinzenal',status:'pending',meet:'meet.google.com/abc-xyz',notes:''},
+  {id:'a4',patientId:'p4',date:'2026-06-26',time:'16:00',type:'Terapia cognitiva',freq:'Semanal',status:'confirmed',meet:'meet.google.com/aaa-bbb-004',notes:''},
+  {id:'a5',patientId:'p5',date:'2026-06-26',time:'18:00',type:'Psicanálise',freq:'Semanal',status:'confirmed',meet:'meet.google.com/aaa-bbb-005',notes:''},
+  {id:'a6',patientId:'p6',date:'2026-06-27',time:'10:00',type:'Acompanhamento',freq:'Quinzenal',status:'confirmed',meet:'meet.google.com/aaa-bbb-006',notes:''},
+];
+
+let currentAgendaDate = new Date();
+let selectedAptId = null;
+let editingPatientId = null;
+let editingAptId = null;
+let focusInterval = null;
+let focusRemaining = 50 * 60;
+let focusRunning = false;
+
+const DEFAULT_TEMPLATE = `Olá {nome}! 😊
+
+Sua consulta está agendada para:
+📅 {dia}
+🕒 {hora_pt} Portugal · {hora_br} Brasília
+
+Acesse pelo link: {link}
+
+Qualquer dúvida estou à disposição!`;
+
+let waTemplate = DEFAULT_TEMPLATE;
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const ptTime = new Date(now.toLocaleString('en-US', {timeZone:'Europe/Lisbon'}));
+  const brTime = new Date(now.toLocaleString('en-US', {timeZone:'America/Sao_Paulo'}));
+  const fmt = d => d.toTimeString().slice(0,5);
+  document.getElementById('clock-pt').textContent = fmt(ptTime);
+  document.getElementById('clock-br').textContent = fmt(brTime);
+  const diff = Math.round((ptTime - brTime) / 3600000);
+  document.getElementById('clock-diff').textContent = diff > 0 ? `PT está ${diff}h à frente de BR` : `BR está ${Math.abs(diff)}h à frente de PT`;
+}
+
+// ── VIEWS ─────────────────────────────────────────────────────────────────────
+const VIEWS = ['dashboard','agenda','patients','availability','settings'];
+function showView(v) {
+  VIEWS.forEach(x => {
+    const el = document.getElementById('view-'+x);
+    if (el) el.classList.toggle('hidden', x !== v);
+  });
+  document.querySelectorAll('.nav-item[data-view]').forEach(n => {
+    n.classList.toggle('active', n.dataset.view === v);
+  });
+  if (v === 'patients') renderPatients();
+  if (v === 'agenda') renderAgenda();
+  if (v === 'dashboard') renderDashboard();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const now = new Date();
+  const days = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const dayName = days[now.getDay()];
+  const dateStr = `${dayName.charAt(0).toUpperCase()+dayName.slice(1)}, ${now.getDate()} de ${months[now.getMonth()]}`;
+  document.getElementById('dash-date').textContent = dateStr;
+  const h = now.getHours();
+  const greeting = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  const name = document.getElementById('cfg-name')?.value || 'Dra. Cláudia';
+  document.getElementById('dash-greeting').textContent = `${greeting}, ${name}!`;
+
+  const todayStr = now.toISOString().slice(0,10);
+  const todayApts = appointments.filter(a => a.date === todayStr && a.status !== 'cancelled');
+  const pending = appointments.filter(a => a.status === 'pending').length;
+
+  document.getElementById('m-today').textContent = todayApts.length;
+  document.getElementById('m-week').textContent = appointments.filter(a => a.status !== 'cancelled').length;
+  document.getElementById('m-total').textContent = patients.length;
+  document.getElementById('m-pending').textContent = pending;
+
+  // Pills
+  const pills = document.getElementById('dash-pills');
+  pills.innerHTML = '';
+  if (todayApts.length) pills.innerHTML += `<span class="pill green">✓ ${todayApts.length} consultas hoje</span>`;
+  if (pending) pills.innerHTML += `<span class="pill amber">${pending} aguardando</span>`;
+
+  // Next apt
+  const nextApt = todayApts.find(a => {
+    const [h2,m2] = a.time.split(':').map(Number);
+    return h * 60 + now.getMinutes() <= h2 * 60 + m2;
+  });
+  if (nextApt) {
+    const p = patients.find(x => x.id === nextApt.patientId);
+    const [ah] = nextApt.time.split(':').map(Number);
+    const diff = ah * 60 - (h * 60 + now.getMinutes());
+    document.getElementById('dash-next-info').textContent = `Próxima: ${p?.name} às ${nextApt.time} · em ${diff} min`;
+    document.getElementById('checklist-label').textContent = `${p?.name} · ${nextApt.time}`;
+  } else {
+    document.getElementById('dash-next-info').textContent = todayApts.length ? 'Consultas concluídas por hoje 🎉' : 'Sem consultas hoje';
+    document.getElementById('checklist-label').textContent = 'Geral';
+  }
+
+  // Alerts
+  const alerts = document.getElementById('dash-alerts');
+  let alertsHtml = '';
+  if (pending) alertsHtml += `<div class="alert-item info"><i class="ti ti-clock"></i><div class="alert-text">${pending} consulta(s) aguardando confirmação</div></div>`;
+  const ptNow = new Date(now.toLocaleString('en-US',{timeZone:'Europe/Lisbon'}));
+  if (ptNow.getHours() < 12) alertsHtml += `<div class="alert-item info"><i class="ti ti-sun"></i><div class="alert-text">Bom dia! Portugal: ${ptNow.toTimeString().slice(0,5)}</div></div>`;
+  if (!alertsHtml) alertsHtml = '<div class="empty-state"><i class="ti ti-check"></i>Tudo em dia! Sem alertas.</div>';
+  alerts.innerHTML = alertsHtml;
+}
+
+// ── AGENDA ────────────────────────────────────────────────────────────────────
+function renderAgenda() {
+  const d = currentAgendaDate;
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  document.getElementById('agenda-title').textContent = `Agenda · ${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+
+  const ds = d.toISOString().slice(0,10);
+  const dayApts = appointments.filter(a => a.date === ds && a.status !== 'cancelled').sort((a,b) => a.time.localeCompare(b.time));
+
+  const list = document.getElementById('apt-list');
+  if (!dayApts.length) {
+    list.innerHTML = '<div class="empty-state"><i class="ti ti-calendar-off"></i>Sem consultas neste dia<br><small style="margin-top:4px;display:block">Clique em + Agendar para adicionar</small></div>';
+    return;
+  }
+
+  list.innerHTML = dayApts.map(a => {
+    const p = patients.find(x => x.id === a.patientId);
+    const sc = a.status === 'confirmed' ? 's-green' : a.status === 'pending' ? 's-amber' : 's-red';
+    const selected = a.id === selectedAptId ? ' selected' : '';
+    return `<div class="apt-row${selected}" onclick="selectApt('${a.id}')">
+      <div class="time-col">${a.time}</div>
+      <div class="flag ${p?.country?.toLowerCase() || 'br'}">${p?.country || 'BR'}</div>
+      <div class="apt-info">
+        <div class="apt-name">${p?.name || 'Paciente'}</div>
+        <div class="apt-sub">${a.type} · ${a.freq}</div>
+      </div>
+      <div class="status-dot ${sc}" title="${a.status}"></div>
+    </div>`;
+  }).join('');
+}
+
+function selectApt(id) {
+  selectedAptId = id;
+  const a = appointments.find(x => x.id === id);
+  const p = patients.find(x => x.id === a?.patientId);
+  if (!a || !p) return;
+
+  document.getElementById('detail-placeholder').classList.add('hidden');
+  document.getElementById('detail-content').classList.remove('hidden');
+
+  // Info tab
+  document.getElementById('det-avatar').textContent = p.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('det-name').textContent = p.name;
+  const flag = p.country === 'PT' ? '🇵🇹' : '🇧🇷';
+  document.getElementById('det-sub').textContent = `${flag} ${p.city} · ${a.freq}`;
+  document.getElementById('det-wa').textContent = p.wa;
+  document.getElementById('det-value').textContent = `${p.value}€ · ${p.payment}`;
+  document.getElementById('det-meet').textContent = p.meet || '—';
+  document.getElementById('det-notes').textContent = p.notes || '—';
+
+  // TZ tab
+  const [h,m] = a.time.split(':').map(Number);
+  const offset = p.country === 'BR' ? -4 : 0;
+  const brH = (h + offset + 24) % 24;
+  const fmt = n => String(n).padStart(2,'0');
+  document.getElementById('det-tz-pt').textContent = `${fmt(h)}:${fmt(m)}`;
+  document.getElementById('det-tz-br').textContent = `${fmt(brH)}:${fmt(m)}`;
+  document.getElementById('tz-apt-label').textContent = `Consulta em ${a.date} às ${a.time} PT`;
+  document.getElementById('tz-diff-note').textContent = 'Portugal está 4h à frente de Brasília (horário de verão pode variar)';
+  document.getElementById('tz-input').value = a.time;
+  convertTz();
+
+  // WA tab
+  const day = new Date(a.date+'T12:00:00').toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('wa-msg').value = buildWaMsg(p, a, day, fmt(h)+':'+fmt(m), fmt(brH)+':'+fmt(m));
+
+  // Refresh list selection
+  renderAgenda();
+}
+
+function buildWaMsg(p, a, day, timePt, timeBr) {
+  const t = waTemplate;
+  return t.replace(/{nome}/g, p.name.split(' ')[0])
+    .replace(/{dia}/g, day)
+    .replace(/{hora_pt}/g, timePt)
+    .replace(/{hora_br}/g, timeBr)
+    .replace(/{link}/g, a.meet || p.meet || '—');
+}
+
+function agendaNav(dir) {
+  currentAgendaDate = new Date(currentAgendaDate);
+  currentAgendaDate.setDate(currentAgendaDate.getDate() + dir);
+  renderAgenda();
+}
+function agendaToday() { currentAgendaDate = new Date(); renderAgenda(); }
+
+function cancelApt() {
+  if (!selectedAptId) return;
+  if (!confirm('Cancelar esta consulta?')) return;
+  const a = appointments.find(x => x.id === selectedAptId);
+  if (a) a.status = 'cancelled';
+  selectedAptId = null;
+  document.getElementById('detail-placeholder').classList.remove('hidden');
+  document.getElementById('detail-content').classList.add('hidden');
+  renderAgenda();
+  renderDashboard();
+  showToast('Consulta cancelada','info');
+}
+
+function editSelectedPatient() {
+  const a = appointments.find(x => x.id === selectedAptId);
+  if (!a) return;
+  openEditPatient(a.patientId);
+}
+
+// ── PATIENTS ──────────────────────────────────────────────────────────────────
+function renderPatients() {
+  const q = (document.getElementById('patient-search')?.value || '').toLowerCase();
+  const filtered = patients.filter(p => p.name.toLowerCase().includes(q) || p.city.toLowerCase().includes(q));
+  document.getElementById('patient-count').textContent = `${filtered.length} paciente${filtered.length !== 1 ? 's' : ''}`;
+  const tb = document.getElementById('patient-table');
+  if (!tb) return;
+  if (!filtered.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Nenhum paciente encontrado</td></tr>';
+    return;
+  }
+  tb.innerHTML = filtered.map(p => `<tr style="border-bottom:0.5px solid var(--border);cursor:pointer" onmouseover="this.style.background='var(--surface-1)'" onmouseout="this.style.background=''">
+    <td style="padding:9px 14px;font-weight:500">${p.country === 'PT' ? '🇵🇹' : '🇧🇷'} ${p.name}</td>
+    <td style="padding:9px 8px;color:var(--text-muted)">${p.country === 'PT' ? 'Portugal' : 'Brasil'}</td>
+    <td style="padding:9px 8px;color:var(--text-accent)">${p.wa}</td>
+    <td style="padding:9px 8px">${p.value}€</td>
+    <td style="padding:9px 8px;color:var(--text-muted)">${p.payment}</td>
+    <td style="padding:9px 8px;display:flex;gap:6px">
+      <button class="action-btn" onclick="openEditPatient('${p.id}')" style="padding:4px 8px"><i class="ti ti-edit"></i></button>
+      <button class="action-btn whatsapp" onclick="quickWa('${p.id}')" style="padding:4px 8px"><i class="ti ti-brand-whatsapp"></i></button>
+      <button class="action-btn danger" onclick="deletePatient('${p.id}')" style="padding:4px 8px"><i class="ti ti-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function openNewPatient() {
+  editingPatientId = null;
+  document.getElementById('modal-patient-title').textContent = 'Novo paciente';
+  ['p-name','p-city','p-wa','p-email','p-value','p-meet','p-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('p-country').value = 'BR';
+  document.getElementById('p-payment').value = 'Transferência';
+  openModal('modal-patient');
+}
+
+function openEditPatient(id) {
+  editingPatientId = id;
+  const p = patients.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('modal-patient-title').textContent = 'Editar paciente';
+  document.getElementById('p-name').value = p.name;
+  document.getElementById('p-country').value = p.country;
+  document.getElementById('p-city').value = p.city;
+  document.getElementById('p-wa').value = p.wa;
+  document.getElementById('p-email').value = p.email || '';
+  document.getElementById('p-value').value = p.value;
+  document.getElementById('p-payment').value = p.payment;
+  document.getElementById('p-meet').value = p.meet || '';
+  document.getElementById('p-notes').value = p.notes || '';
+  openModal('modal-patient');
+}
+
+function savePatient() {
+  const name = document.getElementById('p-name').value.trim();
+  const wa = document.getElementById('p-wa').value.trim();
+  const value = document.getElementById('p-value').value.trim();
+  if (!name || !wa || !value) { showToast('Preencha os campos obrigatórios (*)','info'); return; }
+  const data = {
+    name, wa, value,
+    country: document.getElementById('p-country').value,
+    city: document.getElementById('p-city').value,
+    email: document.getElementById('p-email').value,
+    payment: document.getElementById('p-payment').value,
+    meet: document.getElementById('p-meet').value,
+    notes: document.getElementById('p-notes').value,
+  };
+  if (editingPatientId) {
+    const idx = patients.findIndex(x => x.id === editingPatientId);
+    patients[idx] = {...patients[idx], ...data};
+    showToast('Paciente atualizado com sucesso','success');
+  } else {
+    data.id = 'p' + Date.now();
+    patients.push(data);
+    showToast('Paciente adicionado com sucesso','success');
+  }
+  closeModal('modal-patient');
+  renderPatients();
+  renderDashboard();
+  populateAptPatientSelect();
+}
+
+function deletePatient(id) {
+  if (!confirm('Remover este paciente?')) return;
+  patients = patients.filter(x => x.id !== id);
+  appointments = appointments.filter(x => x.patientId !== id);
+  renderPatients();
+  renderDashboard();
+  showToast('Paciente removido','info');
+}
+
+function quickWa(id) {
+  const p = patients.find(x => x.id === id);
+  if (!p) return;
+  const msg = encodeURIComponent(`Olá ${p.name.split(' ')[0]}! 😊`);
+  window.open(`https://wa.me/${p.wa.replace(/\D/g,'')}?text=${msg}`,'_blank');
+}
+
+// ── APPOINTMENTS ──────────────────────────────────────────────────────────────
+function openNewApt(prefillDate) {
+  editingAptId = null;
+  document.getElementById('modal-apt-title').textContent = 'Nova consulta';
+  document.getElementById('apt-patient').value = '';
+  document.getElementById('apt-date').value = prefillDate || new Date().toISOString().slice(0,10);
+  document.getElementById('apt-time').value = '10:00';
+  document.getElementById('apt-type').value = 'Terapia cognitiva';
+  document.getElementById('apt-freq').value = 'Semanal';
+  document.getElementById('apt-meet').value = '';
+  document.getElementById('apt-notes').value = '';
+  document.getElementById('apt-send-wa').checked = true;
+  updateBrTime();
+  populateAptPatientSelect();
+  openModal('modal-apt');
+}
+
+function openReschedule() {
+  if (!selectedAptId) return;
+  const a = appointments.find(x => x.id === selectedAptId);
+  const p = patients.find(x => x.id === a?.patientId);
+  editingAptId = selectedAptId;
+  document.getElementById('modal-apt-title').textContent = `Reagendar · ${p?.name || ''}`;
+  document.getElementById('apt-date').value = a.date;
+  document.getElementById('apt-time').value = a.time;
+  document.getElementById('apt-type').value = a.type;
+  document.getElementById('apt-freq').value = a.freq;
+  document.getElementById('apt-meet').value = a.meet || '';
+  document.getElementById('apt-notes').value = a.notes || '';
+  populateAptPatientSelect(a.patientId);
+  updateBrTime();
+  openModal('modal-apt');
+}
+
+function populateAptPatientSelect(selectedId) {
+  const sel = document.getElementById('apt-patient');
+  sel.innerHTML = '<option value="">Selecionar...</option>' + patients.map(p =>
+    `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>${p.country === 'PT' ? '🇵🇹' : '🇧🇷'} ${p.name}</option>`
+  ).join('');
+}
+
+function onAptPatientChange() {
+  const pid = document.getElementById('apt-patient').value;
+  const p = patients.find(x => x.id === pid);
+  if (p?.meet) document.getElementById('apt-meet').value = p.meet;
+}
+
+function updateBrTime() {
+  const time = document.getElementById('apt-time').value;
+  if (!time) return;
+  const [h,m] = time.split(':').map(Number);
+  const brH = (h - 4 + 24) % 24;
+  const fmt = n => String(n).padStart(2,'0');
+  document.getElementById('apt-tz-preview').textContent = `🇧🇷 Brasil (Brasília): ${fmt(brH)}:${fmt(m)} · 🇵🇹 Portugal: ${fmt(h)}:${fmt(m)}`;
+}
+
+function saveApt() {
+  const pid = document.getElementById('apt-patient').value;
+  const date = document.getElementById('apt-date').value;
+  const time = document.getElementById('apt-time').value;
+  if (!pid || !date || !time) { showToast('Selecione paciente, data e hora','info'); return; }
+  const data = {
+    patientId: pid, date, time,
+    type: document.getElementById('apt-type').value,
+    freq: document.getElementById('apt-freq').value,
+    meet: document.getElementById('apt-meet').value,
+    notes: document.getElementById('apt-notes').value,
+    status: 'pending',
+  };
+  if (editingAptId) {
+    const idx = appointments.findIndex(x => x.id === editingAptId);
+    appointments[idx] = {...appointments[idx], ...data};
+    showToast('Consulta atualizada!','success');
+  } else {
+    data.id = 'a' + Date.now();
+    appointments.push(data);
+    showToast('Consulta agendada com sucesso!','success');
+  }
+  closeModal('modal-apt');
+  currentAgendaDate = new Date(date + 'T12:00:00');
+  renderAgenda();
+  renderDashboard();
+  if (document.getElementById('apt-send-wa').checked) {
+    const p = patients.find(x => x.id === pid);
+    const a = data;
+    const [h,m] = time.split(':').map(Number);
+    const brH = (h-4+24)%24;
+    const fmt = n => String(n).padStart(2,'0');
+    const day = new Date(date+'T12:00:00').toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+    const msg = buildWaMsg(p, a, day, fmt(h)+':'+fmt(m), fmt(brH)+':'+fmt(m));
+    const url = `https://wa.me/${p.wa.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;
+    setTimeout(() => { if (confirm('Abrir WhatsApp para enviar confirmação?')) window.open(url,'_blank'); }, 500);
+  }
+}
+
+// ── TZ CONVERTER ──────────────────────────────────────────────────────────────
+function convertTz() {
+  const inp = document.getElementById('tz-input');
+  const dir = document.getElementById('tz-dir');
+  const res = document.getElementById('tz-result');
+  if (!inp || !dir || !res) return;
+  const [h,m] = inp.value.split(':').map(Number);
+  let oh = h, from = '', to = '';
+  if (dir.value === 'pt2br') { from='🇵🇹 Portugal'; to='🇧🇷 Brasília'; oh = (h-4+24)%24; }
+  else { from='🇧🇷 Brasília'; to='🇵🇹 Portugal'; oh = (h+4)%24; }
+  const fmt = n => String(n).padStart(2,'0');
+  res.textContent = `${from} ${fmt(h)}:${fmt(m)}  →  ${to} ${fmt(oh)}:${fmt(m)}`;
+}
+
+// ── WHATSAPP ──────────────────────────────────────────────────────────────────
+function sendWhatsApp() {
+  const a = appointments.find(x => x.id === selectedAptId);
+  const p = patients.find(x => x.id === a?.patientId);
+  if (!p) return;
+  const msg = document.getElementById('wa-msg').value;
+  window.open(`https://wa.me/${p.wa.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+function copyWaMsg() {
+  const msg = document.getElementById('wa-msg').value;
+  navigator.clipboard.writeText(msg).then(() => showToast('Mensagem copiada!','success'));
+}
+
+// ── AVAILABILITY ──────────────────────────────────────────────────────────────
+function shareSlot(day, time) {
+  const msg = `Olá! Tenho um horário disponível na ${day} às ${time} (Portugal) / ${calcBrTime(time)} (Brasília). Tem interesse? 😊`;
+  navigator.clipboard.writeText(msg).then(() => showToast(`Horário ${day} ${time} copiado!`,'success'));
+}
+
+function calcBrTime(timePt) {
+  const [h,m] = timePt.split(':').map(Number);
+  const brH = (h-4+24)%24;
+  return `${String(brH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function copyAllSlots() {
+  const msg = `Olá! Meus horários disponíveis esta semana:
+
+📅 Segunda: 09:00 / 11:00 / 15:00 PT
+📅 Quarta: 10:00 / 14:00 / 17:00 PT
+📅 Sexta: 09:00 / 11:30 PT
+
+(Horários em Portugal. Para o Brasil, subtraia 4 horas.)
+
+Responda com o horário de preferência 😊`;
+  navigator.clipboard.writeText(msg).then(() => showToast('Todos os horários copiados!','success'));
+}
+
+function openBlockModal() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('blk-start').value = today;
+  document.getElementById('blk-end').value = today;
+  document.getElementById('blk-desc').value = '';
+  openModal('modal-block');
+}
+
+function saveBlock() {
+  const desc = document.getElementById('blk-desc').value.trim();
+  const start = document.getElementById('blk-start').value;
+  const end = document.getElementById('blk-end').value;
+  const ts = document.getElementById('blk-tstart').value;
+  const te = document.getElementById('blk-tend').value;
+  if (!desc || !start) { showToast('Preencha a descrição e data','info'); return; }
+  const recur = document.getElementById('blk-recur').value;
+  const recLabel = {once:'Único',daily:'Diário',weekly:'Semanal'}[recur];
+  const colors = ['#FCEBEB','#FAEEDA','#E6F1FB'];
+  const txtColors = ['#A32D2D','#854F0B','#185FA5'];
+  const ci = Math.floor(Math.random()*3);
+  const id = 'b' + Date.now();
+  const label = start === end ? start : `${start} a ${end}`;
+  const bl = document.getElementById('blocks-list');
+  const div = document.createElement('div');
+  div.className = 'block-item';
+  div.dataset.id = id;
+  div.style.cssText = `padding:8px 10px;background:${colors[ci]};border-radius:var(--radius);font-size:12px;color:${txtColors[ci]};display:flex;justify-content:space-between;align-items:center`;
+  div.innerHTML = `<span>${desc} · ${label} · ${ts}–${te}</span><button onclick="removeBlock('${id}')" style="background:none;border:none;cursor:pointer;color:${txtColors[ci]};font-size:14px">✕</button>`;
+  bl.appendChild(div);
+  closeModal('modal-block');
+  showToast('Bloqueio adicionado','success');
+}
+
+function removeBlock(id) {
+  const el = document.querySelector(`.block-item[data-id="${id}"]`);
+  if (el) el.remove();
+  showToast('Bloqueio removido','info');
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function updateProfile() {
+  const name = document.getElementById('cfg-name').value;
+  document.getElementById('sidebar-username').textContent = name;
+  renderDashboard();
+}
+
+function toggleIntegration(type) {
+  if (type === 'gcal') {
+    const on = document.getElementById('tog-gcal').checked;
+    document.getElementById('gcal-info').classList.toggle('hidden', !on);
+    showToast(on ? 'Google Agenda ativado' : 'Google Agenda desativado', on ? 'success' : 'info');
+  } else if (type === 'wa') {
+    const on = document.getElementById('tog-wa').checked;
+    showToast(on ? 'WhatsApp ativado' : 'WhatsApp desativado', on ? 'success' : 'info');
+  }
+}
+
+function insertTag(tag) {
+  const ta = document.getElementById('wa-template');
+  const start = ta.selectionStart;
+  ta.value = ta.value.slice(0, start) + tag + ta.value.slice(ta.selectionEnd);
+  ta.selectionStart = ta.selectionEnd = start + tag.length;
+  ta.focus();
+}
+
+function saveTemplate() {
+  waTemplate = document.getElementById('wa-template').value;
+  showToast('Template salvo!','success');
+}
+
+function resetTemplate() {
+  document.getElementById('wa-template').value = DEFAULT_TEMPLATE;
+  waTemplate = DEFAULT_TEMPLATE;
+  showToast('Template restaurado','info');
+}
+
+// ── CHECKLIST ─────────────────────────────────────────────────────────────────
+function toggleCheck(i) {
+  const el = document.getElementById('chk' + i);
+  el.classList.toggle('done', el.querySelector('input').checked);
+}
+
+// ── FOCUS TIMER ───────────────────────────────────────────────────────────────
+function focusStart() {
+  focusRunning = true;
+  document.getElementById('focus-start-btn').style.display = 'none';
+  document.getElementById('focus-pause-btn').style.display = '';
+  focusInterval = setInterval(() => {
+    if (focusRemaining <= 0) { focusReset(); showToast('⏰ Sessão concluída!','success'); return; }
+    focusRemaining--;
+    updateFocusDisplay();
+  }, 1000);
+}
+function focusPause() {
+  clearInterval(focusInterval);
+  focusRunning = false;
+  document.getElementById('focus-start-btn').style.display = '';
+  document.getElementById('focus-start-btn').textContent = '▶ Retomar';
+  document.getElementById('focus-pause-btn').style.display = 'none';
+}
+function focusReset() {
+  clearInterval(focusInterval);
+  focusRunning = false;
+  const mins = parseInt(document.getElementById('focus-duration').value);
+  focusRemaining = mins * 60;
+  document.getElementById('focus-start-btn').style.display = '';
+  document.getElementById('focus-start-btn').textContent = '▶ Iniciar';
+  document.getElementById('focus-pause-btn').style.display = 'none';
+  updateFocusDisplay();
+}
+function updateFocusDisplay() {
+  const m = Math.floor(focusRemaining / 60);
+  const s = focusRemaining % 60;
+  document.getElementById('focus-timer').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+const TABS = ['info','tz','wa'];
+function switchTab(t) {
+  TABS.forEach(x => {
+    const el = document.getElementById('tab-' + x);
+    if (el) el.classList.toggle('hidden', x !== t);
+  });
+  document.querySelectorAll('.tab').forEach(n => {
+    const map = {info:'Paciente',tz:'Fuso',wa:'WhatsApp'};
+    n.classList.toggle('active', n.textContent.trim() === map[t]);
+  });
+  if (t === 'tz') convertTz();
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
+});
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimeout;
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✓ ' : 'ℹ ') + msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+updateClock();
+setInterval(updateClock, 30000);
+renderDashboard();
+populateAptPatientSelect();
+
+// Keyboard shortcut: Escape closes modals
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['modal-apt','modal-patient','modal-block'].forEach(id => {
+      if (!document.getElementById(id).classList.contains('hidden')) closeModal(id);
+    });
+  }
+});
+</script>

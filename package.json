@@ -1,0 +1,14 @@
+{
+  "name": "therapydesk",
+  "version": "1.0.0",
+  "description": "Agenda inteligente para terapeutas — Brasil & Portugal",
+  "scripts": {
+    "install:all": "cd backend && npm install",
+    "backend": "cd backend && node server.js",
+    "backend:dev": "cd backend && npx nodemon server.js",
+    "start": "npm run backend"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
