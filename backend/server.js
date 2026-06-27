@@ -13,8 +13,27 @@ const isProd = process.env.NODE_ENV === 'production';
 
 // ── SEGURANÇA ─────────────────────────────────────────────────────────────
 app.use(helmet());
+
+// Origens permitidas: FRONTEND_URL exato + qualquer preview do Vercel + localhost
+const ALLOWED_ORIGINS = [
+  process.env.FRONTEND_URL,
+  /^https:\/\/therapy-desk[\w-]*\.vercel\.app$/,
+  'http://localhost:5500',
+  'http://localhost:3000',
+  'http://127.0.0.1:5500',
+].filter(Boolean);
+
 app.use(cors({
-  origin: isProd ? (process.env.FRONTEND_URL || false) : '*',
+  origin: isProd
+    ? (origin, cb) => {
+        // Sem origin (same-origin, curl, mobile) → OK
+        if (!origin) return cb(null, true);
+        const ok = ALLOWED_ORIGINS.some(p =>
+          typeof p === 'string' ? p === origin : p.test(origin)
+        );
+        cb(ok ? null : new Error('CORS: origem não permitida'), ok);
+      }
+    : '*',
   credentials: true,
 }));
 app.use(rateLimit({
