@@ -1,5 +1,35 @@
 # 🚀 TherapyDesk — Guia de Deploy
 
+---
+
+## 0. Configurar PostgreSQL + Variáveis no Railway (OBRIGATÓRIO)
+
+> ⚠️ O SQLite foi removido. O banco agora é PostgreSQL no Railway — os dados persistem entre deploys.
+
+### 0.1 Adicionar o banco PostgreSQL ao projeto Railway
+
+1. Acesse https://railway.app e abra seu projeto **TherapyDesk**
+2. Clique em **New** → **Database** → **Add PostgreSQL**
+3. O Railway cria o banco e injeta automaticamente a variável `DATABASE_URL` no serviço do backend
+
+### 0.2 Adicionar variáveis de ambiente no Railway
+
+No serviço backend (não no banco), vá em **Variables** e adicione:
+
+| Variável | Valor |
+|---|---|
+| `NODE_ENV` | `production` |
+| `JWT_SECRET` | gere com: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `FRONTEND_URL` | URL do Vercel (ex: `https://therapy-desk-xxx.vercel.app`) |
+
+> `DATABASE_URL` é injetada automaticamente pelo Railway quando você adiciona o banco PostgreSQL — não precisa criar à mão.
+
+### 0.3 Fazer o redeploy
+
+Após adicionar as variáveis, vá em **Deployments** e clique em **Redeploy** (ou faça um `git push` que o deploy automático cuida).
+
+---
+
 ## 1. Subir para o GitHub
 
 ### 1.1 Criar o repositório no GitHub

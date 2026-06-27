@@ -471,6 +471,39 @@
     .tag-chip { display: inline-flex; align-items: center; padding: 5px 10px; background: var(--accent-light); color: var(--accent); border-radius: 20px; font-size: 12px; font-weight: 600; margin: 3px; cursor: pointer; border: none; }
     .tag-chip:active { background: #D6CEFC; }
 
+    /* ── AUTH SCREEN ── */
+    .auth-screen {
+      position: fixed; inset: 0; z-index: 1000;
+      background: var(--bg); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .auth-screen.hidden { display: none; }
+    .auth-logo {
+      font-size: 40px; font-weight: 800; color: var(--accent);
+      letter-spacing: -1px; margin-bottom: 6px;
+    }
+    .auth-tagline { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; }
+    .auth-card {
+      width: 100%; max-width: 380px;
+      background: var(--surface); border-radius: 20px;
+      box-shadow: var(--shadow); padding: 24px;
+    }
+    .auth-tabs {
+      display: flex; background: var(--surface-2);
+      border-radius: var(--radius-sm); padding: 4px; margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1; padding: 9px; text-align: center;
+      font-size: 14px; font-weight: 600; border-radius: 6px;
+      cursor: pointer; color: var(--text-muted); border: none; background: transparent;
+    }
+    .auth-tab.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+    .auth-error {
+      background: var(--danger-bg); color: var(--danger-text);
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      font-size: 13px; margin-bottom: 16px; display: none;
+    }
+
     /* ── DESKTOP FALLBACK ── */
     @media (min-width: 600px) {
       .app { max-width: 430px; margin: 0 auto; }
@@ -479,6 +512,31 @@
   </style>
 </head>
 <body>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-logo">TherapyDesk</div>
+  <div class="auth-tagline">Agenda inteligente para terapeutas</div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Entrar</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Criar conta</button>
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+    <div id="auth-form-login">
+      <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-input" id="login-email" placeholder="dra@email.com" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">Senha</label><input type="password" class="form-input" id="login-password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn btn-primary" onclick="doLogin()" id="login-btn">Entrar</button>
+    </div>
+    <div id="auth-form-register" style="display:none">
+      <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-input" id="reg-name" placeholder="Dra. Ana Silva" autocomplete="name"></div>
+      <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-input" id="reg-email" placeholder="dra@email.com" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">Senha <span style="color:var(--text-muted);font-weight:400">(mín. 8 caracteres)</span></label><input type="password" class="form-input" id="reg-password" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn btn-primary" onclick="doRegister()" id="register-btn">Criar conta</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
   <!-- HEADER -->
@@ -673,6 +731,17 @@
         </div>
       </div>
 
+      <!-- Conta -->
+      <div class="settings-section">
+        <div class="settings-title">Conta</div>
+        <div class="settings-card" style="border-radius:var(--radius);box-shadow:var(--shadow)">
+          <div class="card-body">
+            <p id="cfg-account-info" style="font-size:13px;color:var(--text-muted);margin-bottom:12px"></p>
+            <button class="btn btn-danger btn-full" onclick="logout()">Sair da conta</button>
+          </div>
+        </div>
+      </div>
+
       <!-- WA Template -->
       <div class="settings-section">
         <div class="settings-title">Template WhatsApp</div>
@@ -836,11 +905,16 @@ Qualquer dúvida estou à disposição!</textarea>
 
 <script>
 // ══════════════════════════════════════════════════════════════════════
-// CONFIG — troque a URL do backend em produção
+// CONFIG — atualize RAILWAY_URL após cada redeploy do backend
 // ══════════════════════════════════════════════════════════════════════
+const RAILWAY_URL = 'https://therapydesk-api.up.railway.app'; // ← Railway URL
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3001/api'
-  : 'https://therapydesk.vercel.app/api'; // atualizar após deploy
+  : RAILWAY_URL + '/api';
+
+// ── AUTH STATE ────────────────────────────────────────────────────────
+let TOKEN = localStorage.getItem('td_token');
+let currentUser = JSON.parse(localStorage.getItem('td_user') || 'null');
 
 const DEFAULT_TEMPLATE = `Olá {nome}! 😊
 
@@ -879,21 +953,118 @@ let focusRunning = false;
 let focusDur = 50;
 
 // ── API HELPERS ────────────────────────────────────────────────────────
+function authHeader() {
+  return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+}
+function handle401(status) {
+  if (status === 401) { logout(); return true; }
+  return false;
+}
 async function apiGet(path) {
-  try { const r = await fetch(API + path); if (!r.ok) throw new Error(); return await r.json(); }
-  catch { return null; }
+  try {
+    const r = await fetch(API + path, { headers: authHeader() });
+    if (handle401(r.status)) return null;
+    if (!r.ok) return null;
+    return r.json();
+  } catch { return null; }
 }
 async function apiPost(path, data) {
-  try { const r = await fetch(API + path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); return await r.json(); }
-  catch { return null; }
+  try {
+    const r = await fetch(API + path, { method:'POST', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
+    if (handle401(r.status)) return null;
+    return r.json();
+  } catch { return null; }
 }
 async function apiPut(path, data) {
-  try { const r = await fetch(API + path, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); return await r.json(); }
-  catch { return null; }
+  try {
+    const r = await fetch(API + path, { method:'PUT', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
+    if (handle401(r.status)) return null;
+    return r.json();
+  } catch { return null; }
 }
 async function apiDel(path) {
-  try { await fetch(API + path, {method:'DELETE'}); return true; }
-  catch { return false; }
+  try {
+    const r = await fetch(API + path, { method:'DELETE', headers: authHeader() });
+    if (handle401(r.status)) return false;
+    return true;
+  } catch { return false; }
+}
+
+// ── AUTH FUNCTIONS ────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById('auth-form-login').style.display  = tab === 'login'    ? '' : 'none';
+  document.getElementById('auth-form-register').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function setAuthLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Aguarde...' : (btnId === 'login-btn' ? 'Entrar' : 'Criar conta');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showAuthError('Preencha e-mail e senha'); return; }
+  setAuthLoading('login-btn', true);
+  try {
+    const r = await fetch(API + '/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await r.json();
+    if (!r.ok) { showAuthError(data.error || 'Erro ao entrar'); return; }
+    saveSession(data.token, data.user);
+  } catch { showAuthError('Sem conexão com o servidor'); }
+  finally { setAuthLoading('login-btn', false); }
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  if (!name || !email || !password) { showAuthError('Preencha todos os campos'); return; }
+  if (password.length < 8) { showAuthError('Senha deve ter no mínimo 8 caracteres'); return; }
+  setAuthLoading('register-btn', true);
+  try {
+    const r = await fetch(API + '/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await r.json();
+    if (!r.ok) { showAuthError(data.error || 'Erro ao criar conta'); return; }
+    saveSession(data.token, data.user);
+  } catch { showAuthError('Sem conexão com o servidor'); }
+  finally { setAuthLoading('register-btn', false); }
+}
+
+function saveSession(token, user) {
+  TOKEN = token;
+  currentUser = user;
+  localStorage.setItem('td_token', token);
+  localStorage.setItem('td_user', JSON.stringify(user));
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('cfg-name').value = user.name;
+  const info = document.getElementById('cfg-account-info');
+  if (info) info.textContent = `Logado como ${user.name} (${user.email})`;
+  loadData().then(() => { renderDashboard(); renderAgenda(); renderPatients(); });
+}
+
+function logout() {
+  TOKEN = null; currentUser = null;
+  localStorage.removeItem('td_token');
+  localStorage.removeItem('td_user');
+  patients = []; appointments = [];
+  document.getElementById('auth-screen').classList.remove('hidden');
 }
 
 async function loadData() {
@@ -1367,10 +1538,21 @@ function showToast(msg, type='info') {
 
 // ── INIT ──────────────────────────────────────────────────────────────
 updateClock();
-setInterval(updateClock,30000);
+setInterval(updateClock, 30000);
 doConvert();
-renderDashboard();
-loadData().then(()=>{ renderDashboard(); });
+
+if (TOKEN && currentUser) {
+  // Sessão existente — mostrar app imediatamente
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('cfg-name').value = currentUser.name || '';
+  const info = document.getElementById('cfg-account-info');
+  if (info) info.textContent = `Logado como ${currentUser.name} (${currentUser.email})`;
+  renderDashboard();
+  loadData().then(() => { renderDashboard(); renderAgenda(); renderPatients(); });
+} else {
+  // Sem sessão — mostrar tela de login
+  document.getElementById('auth-screen').classList.remove('hidden');
+}
 
 // PWA service worker
 if ('serviceWorker' in navigator) {
