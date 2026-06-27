@@ -907,7 +907,7 @@ Qualquer dúvida estou à disposição!</textarea>
 // ══════════════════════════════════════════════════════════════════════
 // CONFIG — atualize RAILWAY_URL após cada redeploy do backend
 // ══════════════════════════════════════════════════════════════════════
-const RAILWAY_URL = 'https://therapydesk-api.up.railway.app'; // ← Railway URL
+const RAILWAY_URL = 'https://therapydesk-production.up.railway.app'; // ← Railway URL
 const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3001/api'
   : RAILWAY_URL + '/api';
@@ -1337,10 +1337,9 @@ async function saveApt() {
     else { appointments = appointments.map(a=>a.id===editingAptId?{...a,...data}:a); }
     showToast('Consulta atualizada!','success');
   } else {
-    data.id = 'a'+Date.now();
     const r = await apiPost('/appointments', data);
-    if (r?.id) data.id = r.id;
-    appointments.push(data);
+    const saved = r || { ...data, id: 'a'+Date.now() };
+    appointments.push(saved);
     showToast('Consulta agendada!','success');
   }
   closeSheet('sheet-apt');
@@ -1396,16 +1395,18 @@ async function savePatient() {
   const wa = document.getElementById('p-wa').value.trim();
   const value = document.getElementById('p-value').value.trim();
   if (!name||!wa||!value) { showToast('Preencha nome, WhatsApp e valor','warn'); return; }
-  const data = { name, wa, value, country:document.getElementById('p-country').value, city:document.getElementById('p-city').value, email:document.getElementById('p-email').value, payment:document.getElementById('p-payment').value, meet:document.getElementById('p-meet').value, notes:document.getElementById('p-notes').value };
+  const data = { name, whatsapp: wa, value, country:document.getElementById('p-country').value, city:document.getElementById('p-city').value, email:document.getElementById('p-email').value, payment:document.getElementById('p-payment').value, meet:document.getElementById('p-meet').value, notes:document.getElementById('p-notes').value };
   if (editingPatientId) {
-    await apiPut('/patients/'+editingPatientId, data);
-    patients = patients.map(p=>p.id===editingPatientId?{...p,...data}:p);
+    const r = await apiPut('/patients/'+editingPatientId, data);
+    // Usa resposta do servidor (tem 'wa' mapeado corretamente); fallback local com wa normalizado
+    const updated = r || { ...data, wa: data.whatsapp };
+    patients = patients.map(p => p.id === editingPatientId ? { ...p, ...updated } : p);
     showToast('Paciente atualizado!','success');
   } else {
-    data.id = 'p'+Date.now();
     const r = await apiPost('/patients', data);
-    if (r?.id) data.id = r.id;
-    patients.push(data);
+    // Usa resposta do servidor quando disponível (id real + campos normalizados)
+    const saved = r || { ...data, id: 'p'+Date.now(), wa: data.whatsapp };
+    patients.push(saved);
     showToast('Paciente adicionado!','success');
   }
   closeSheet('sheet-patient'); renderPatients(); renderDashboard(); populatePatientSelect();

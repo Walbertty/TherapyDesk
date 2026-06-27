@@ -4,7 +4,7 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "startCommand": "node server.js",
+    "startCommand": "cd backend && npm install && node server.js",
     "restartPolicyType": "ON_FAILURE"
   }
 }

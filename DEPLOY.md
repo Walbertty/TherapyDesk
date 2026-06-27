@@ -103,15 +103,12 @@ Após o deploy, o Railway gera uma URL como:
 ### 3.2 Atualizar a URL do backend no frontend
 Após o deploy do Railway, edite o arquivo `frontend/index.html`:
 
-Encontre esta linha (próxima ao final, na seção `<script>`):
+A URL já está configurada em `frontend/index.html`:
 ```javascript
-: 'https://therapydesk-api.up.railway.app/api';
+const RAILWAY_URL = 'https://therapydesk-production.up.railway.app';
 ```
 
-Substitua pela URL gerada pelo Railway:
-```javascript
-: 'https://SUA-URL-RAILWAY.up.railway.app/api';
-```
+Se o Railway gerar uma URL diferente, atualize essa constante com a nova URL.
 
 Depois faça:
 ```bash
