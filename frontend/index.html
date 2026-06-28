@@ -1435,7 +1435,7 @@ function openAptDetail(id) {
   document.getElementById('sheet-detail-foot').innerHTML = `
     <button class="btn btn-wa" style="flex:2" onclick="sendWa('${p.wa}')">💬 WhatsApp</button>
     <button class="btn btn-outline" style="flex:1" onclick="copyWaMsg()">📋 Copiar</button>
-    <a class="btn btn-outline btn-sm" title="Adicionar ao Google Calendar" href="${makeGcalUrl(a, pat)}" target="_blank" rel="noopener" style="text-decoration:none">📅</a>
+    <a class="btn btn-outline btn-sm" title="Adicionar ao Google Calendar" href="${makeGcalUrl(a, p)}" target="_blank" rel="noopener" style="text-decoration:none">📅</a>
     <button class="btn btn-danger btn-sm" onclick="cancelApt('${a.id}')">✕</button>
   `;
   openSheet('sheet-detail');
@@ -1518,8 +1518,8 @@ async function saveApt() {
   };
   if (editingAptId) {
     const r = await apiPut('/appointments/'+editingAptId, data);
-    if (r) { appointments = appointments.map(a=>a.id===editingAptId?{...a,...data}:a); }
-    else { appointments = appointments.map(a=>a.id===editingAptId?{...a,...data}:a); }
+    if (!r) { showToast('Erro ao atualizar consulta','error'); return; }
+    appointments = appointments.map(a => a.id===editingAptId ? {...a,...data} : a);
     showToast('Consulta atualizada!','success');
   } else {
     const r = await apiPost('/appointments', data);

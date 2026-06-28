@@ -1,4 +1,4 @@
-const CACHE = 'therapydesk-v4';
+const CACHE = 'therapydesk-v5';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 
 self.addEventListener('install', e => {
