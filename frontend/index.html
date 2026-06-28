@@ -1062,6 +1062,7 @@ async function apiPost(path, data) {
   try {
     const r = await fetch(API + path, { method:'POST', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
     if (handle401(r.status)) return null;
+    if (!r.ok) { console.warn('[apiPost]', path, r.status); return null; }
     return r.json();
   } catch { return null; }
 }
@@ -1069,6 +1070,7 @@ async function apiPut(path, data) {
   try {
     const r = await fetch(API + path, { method:'PUT', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
     if (handle401(r.status)) return null;
+    if (!r.ok) { console.warn('[apiPut]', path, r.status); return null; }
     return r.json();
   } catch { return null; }
 }
@@ -1241,6 +1243,16 @@ function showView(v) {
   if (v === 'patients') renderPatients();
 }
 
+// ── TIMEZONE HELPER ────────────────────────────────────────────────────
+// Converte hora de Portugal para Brasília respeitando DST (3h ou 4h conforme época)
+function ptToBrHour(ptHour, ptMin, dateStr) {
+  const ref = new Date(`${dateStr || new Date().toISOString().slice(0,10)}T12:00:00Z`);
+  const ptH = parseInt(new Intl.DateTimeFormat('en',{timeZone:'Europe/Lisbon',hour:'2-digit',hour12:false}).format(ref));
+  const brH = parseInt(new Intl.DateTimeFormat('en',{timeZone:'America/Sao_Paulo',hour:'2-digit',hour12:false}).format(ref));
+  const diff = ((ptH - brH) + 24) % 24; // diferença em horas (normalmente 3 ou 4)
+  return (ptHour - diff + 24) % 24;
+}
+
 // ── CLOCK ──────────────────────────────────────────────────────────────
 function updateClock() {
   const now = new Date();
@@ -1362,7 +1374,7 @@ function openAptDetail(id) {
   if (!a||!p) return;
 
   const [h,m] = a.time.split(':').map(Number);
-  const brH = (h-4+24)%24;
+  const brH = ptToBrHour(h, m, a.date);
   const fmt = n=>String(n).padStart(2,'0');
   const timePt = `${fmt(h)}:${fmt(m)}`;
   const timeBr = `${fmt(brH)}:${fmt(m)}`;
@@ -1460,8 +1472,9 @@ function onPatientChange() {
 
 function updateBrPreview() {
   const t = document.getElementById('apt-time').value; if(!t) return;
+  const dateVal = document.getElementById('apt-date')?.value || new Date().toISOString().slice(0,10);
   const [h,m] = t.split(':').map(Number);
-  const brH = (h-4+24)%24;
+  const brH = ptToBrHour(h, m, dateVal);
   const fmt = n=>String(n).padStart(2,'0');
   document.getElementById('apt-tz-preview').textContent = `🇵🇹 Portugal: ${fmt(h)}:${fmt(m)}   ↔   🇧🇷 Brasília: ${fmt(brH)}:${fmt(m)}`;
 }
@@ -1496,7 +1509,7 @@ async function saveApt() {
   if (document.getElementById('apt-send-wa').checked) {
     const p = patients.find(x=>x.id===pid);
     const [h,m] = time.split(':').map(Number);
-    const brH = (h-4+24)%24;
+    const brH = ptToBrHour(h, m, date);
     const fmt = n=>String(n).padStart(2,'0');
     const day = new Date(date+'T12:00:00').toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
     const msg = buildMsg(p, data, day, fmt(h)+':'+fmt(m), fmt(brH)+':'+fmt(m));
@@ -1837,13 +1850,15 @@ function copyWaMsg() {
 // ── AVAILABILITY ───────────────────────────────────────────────────────
 function copySlot(day, time) {
   const [h,m] = time.split(':').map(Number);
-  const brH = (h-4+24)%24;
+  const brH = ptToBrHour(h, m);
   const timeBr = `${String(brH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const diff = ((h - brH) + 24) % 24;
   const msg = `Olá! Tenho um horário disponível na ${day} às ${time} (Portugal) / ${timeBr} (Brasília). Tem interesse? 😊`;
   navigator.clipboard.writeText(msg).then(()=>showToast(`${day} ${time} copiado!`,'success'));
 }
 function copyAllSlots() {
-  const msg = `Olá! Meus horários disponíveis esta semana:\n\n📅 Segunda: 09:00 / 11:00 / 15:00 PT\n📅 Quarta: 10:00 / 14:00 / 17:00 PT\n📅 Sexta: 09:00 / 11:30 PT\n\n(Horários em Portugal — subtraia 4h para o Brasil)\n\nQual prefere? 😊`;
+  const diff = ((h => { const ref=new Date(); const p=parseInt(new Intl.DateTimeFormat('en',{timeZone:'Europe/Lisbon',hour:'2-digit',hour12:false}).format(ref)); const b=parseInt(new Intl.DateTimeFormat('en',{timeZone:'America/Sao_Paulo',hour:'2-digit',hour12:false}).format(ref)); return ((p-b)+24)%24; })());
+  const msg = `Olá! Meus horários disponíveis esta semana:\n\n📅 Segunda: 09:00 / 11:00 / 15:00 PT\n📅 Quarta: 10:00 / 14:00 / 17:00 PT\n📅 Sexta: 09:00 / 11:30 PT\n\n(Horários em Portugal — subtraia ${diff}h para o Brasil)\n\nQual prefere? 😊`;
   navigator.clipboard.writeText(msg).then(()=>showToast('Horários copiados!','success'));
 }
 
