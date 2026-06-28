@@ -663,6 +663,14 @@
         <div id="dash-today-list"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
       </div>
 
+      <div class="card">
+        <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Receita do mês</span>
+          <span id="revenue-month-label" style="font-weight:400;font-size:12px;color:var(--text-muted)"></span>
+        </div>
+        <div class="card-body" id="dash-revenue"></div>
+      </div>
+
       <!-- Focus Timer -->
       <div class="focus-card" id="focus-card">
         <div class="focus-label">⏱ Modo Foco — Sessão</div>
@@ -697,13 +705,16 @@
     <!-- ══ AGENDA ══ -->
     <div class="view" id="view-agenda">
       <div class="date-nav">
-        <button class="date-nav-btn" onclick="agendaNav(-1)">‹</button>
+        <button class="date-nav-btn" id="agenda-prev-btn" onclick="agendaNav(-1)">‹</button>
         <div class="date-nav-center">
           <div class="date-nav-day" id="agenda-day-label"></div>
           <div class="date-nav-full" id="agenda-full-label"></div>
-          <button class="date-today-btn" onclick="agendaToday()">Hoje</button>
+          <div style="display:flex;gap:6px;justify-content:center;margin-top:4px">
+            <button class="date-today-btn" onclick="agendaToday()">Hoje</button>
+            <button class="date-today-btn" id="week-view-btn" onclick="toggleWeekView()" style="background:var(--surface-2);border-radius:20px;padding:4px 10px;border:1px solid var(--border);font-size:11px;cursor:pointer">📅 Semana</button>
+          </div>
         </div>
-        <button class="date-nav-btn" onclick="agendaNav(1)">›</button>
+        <button class="date-nav-btn" id="agenda-next-btn" onclick="agendaNav(1)">›</button>
       </div>
       <div class="card">
         <div id="apt-list-wrap"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
@@ -735,8 +746,7 @@
       <div class="card">
         <div class="card-head">Bloqueios</div>
         <div id="blocks-list">
-          <div class="block-item"><div class="block-info"><div class="block-title">🍽 Almoço</div><div class="block-sub">13:00–14:00 · Diário</div></div><button class="block-remove" onclick="this.closest('.block-item').remove();showToast('Bloqueio removido')">✕</button></div>
-          <div class="block-item"><div class="block-info"><div class="block-title">📚 Curso</div><div class="block-sub">15–17 jun · 09:00–12:00</div></div><button class="block-remove" onclick="this.closest('.block-item').remove();showToast('Bloqueio removido')">✕</button></div>
+          <div class="empty" style="padding:20px 0" id="blocks-empty"><div class="empty-icon">🚫</div><div class="empty-sub">Nenhum bloqueio adicionado</div></div>
         </div>
         <div style="padding:14px 16px">
           <button class="btn btn-outline btn-full" onclick="openSheet('sheet-block')">+ Adicionar bloqueio</button>
@@ -762,10 +772,10 @@
       <div class="settings-section">
         <div class="settings-title">Perfil</div>
         <div class="settings-card card-body" style="border-radius:var(--radius);box-shadow:var(--shadow)">
-          <div class="form-group"><label class="form-label">Seu nome</label><input type="text" class="form-input" id="cfg-name" value="Dra. Cláudia" oninput="updateName()"></div>
+          <div class="form-group"><label class="form-label">Seu nome</label><input type="text" class="form-input" id="cfg-name" value="Dra. Cláudia" oninput="updateName()" onblur="saveProfileSettings()"></div>
           <div class="form-row-2">
-            <div class="form-group"><label class="form-label">Duração sessão</label><select class="form-select" id="cfg-dur"><option value="45">45 min</option><option value="50" selected>50 min</option><option value="60">60 min</option></select></div>
-            <div class="form-group"><label class="form-label">Moeda</label><select class="form-select" id="cfg-currency"><option value="EUR" selected>€ Euro</option><option value="BRL">R$ Real</option></select></div>
+            <div class="form-group"><label class="form-label">Duração sessão</label><select class="form-select" id="cfg-dur" onchange="saveProfileSettings()"><option value="45">45 min</option><option value="50" selected>50 min</option><option value="60">60 min</option></select></div>
+            <div class="form-group"><label class="form-label">Moeda</label><select class="form-select" id="cfg-currency" onchange="saveProfileSettings()"><option value="EUR" selected>€ Euro</option><option value="BRL">R$ Real</option></select></div>
           </div>
         </div>
       </div>
@@ -790,7 +800,7 @@
           <div class="integration-row">
             <div class="integration-icon" style="background:#E8F5E9">💬</div>
             <div style="flex:1"><div class="integration-title">WhatsApp</div><div class="integration-sub">Envio de mensagens</div></div>
-            <label class="toggle"><input type="checkbox" id="tog-wa" checked><span class="toggle-slider"></span></label>
+            <label class="toggle"><input type="checkbox" id="tog-wa" checked onchange="saveProfileSettings()"><span class="toggle-slider"></span></label>
           </div>
         </div>
       </div>
@@ -915,15 +925,16 @@ Qualquer dúvida estou à disposição!</textarea>
       <div class="form-section">Paciente e horário</div>
       <div class="form-group"><label class="form-label">Paciente *</label><select class="form-select" id="apt-patient" onchange="onPatientChange()"><option value="">Selecionar...</option></select></div>
       <div class="form-row-2">
-        <div class="form-group"><label class="form-label">Data *</label><input type="date" class="form-input" id="apt-date"></div>
+        <div class="form-group"><label class="form-label">Data *</label><input type="date" class="form-input" id="apt-date" onchange="updateBrPreview()"></div>
         <div class="form-group"><label class="form-label">Hora (PT) *</label><input type="time" class="form-input" id="apt-time" value="10:00" onchange="updateBrPreview()"></div>
       </div>
       <div id="apt-tz-preview" style="padding:10px 12px;background:var(--accent-light);border-radius:var(--radius-sm);font-size:13px;color:var(--accent);margin-bottom:16px;font-weight:500"></div>
       <div class="form-section">Sessão</div>
       <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="apt-type"><option>Terapia cognitiva</option><option>Psicanálise</option><option>Terapia familiar</option><option>Sessão inicial</option><option>Acompanhamento</option></select></div>
       <div class="form-group"><label class="form-label">Frequência</label><select class="form-select" id="apt-freq"><option>Semanal</option><option>Quinzenal</option><option>Mensal</option><option>Único</option></select></div>
+      <div class="form-group" id="apt-recur-row"><label class="form-label">Criar sessões recorrentes</label><select class="form-select" id="apt-recur"><option value="1">Apenas esta sessão</option><option value="4">4 semanas (1 mês)</option><option value="8">8 semanas (2 meses)</option><option value="12">12 semanas (3 meses)</option><option value="16">16 semanas (4 meses)</option></select></div>
       <div class="form-group"><label class="form-label">Link Google Meet</label><input type="url" class="form-input" id="apt-meet" placeholder="meet.google.com/..."></div>
-      <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="apt-notes" placeholder="Observações..."></textarea></div>
+      <div class="form-group"><label class="form-label">Notas da sessão</label><textarea class="form-textarea" id="apt-notes" placeholder="Observações desta sessão..."></textarea></div>
       <div class="form-group" style="display:flex;align-items:center;gap:10px">
         <input type="checkbox" id="apt-send-wa" checked style="width:20px;height:20px;accent-color:var(--accent)">
         <label for="apt-send-wa" style="font-size:14px">Enviar confirmação pelo WhatsApp</label>
@@ -1248,9 +1259,22 @@ function logout() {
   TOKEN = null; currentUser = null;
   localStorage.removeItem('td_token');
   localStorage.removeItem('td_user');
+  localStorage.removeItem('td_checklist'); // limpar checklist ao sair
   patients = []; appointments = [];
   userSettings = {};
+  waTemplate = DEFAULT_TEMPLATE;
   _notifTimers.forEach(t => clearTimeout(t)); _notifTimers = [];
+  // Resetar campos de configuração para o próximo login
+  const resetField = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  resetField('cfg-name', '');
+  resetField('cfg-dur', '50');
+  resetField('cfg-currency', 'EUR');
+  const waToggle = document.getElementById('tog-wa'); if (waToggle) waToggle.checked = true;
+  // Limpar checklist visual
+  for (let i = 0; i <= 6; i++) { const el = document.getElementById('chk'+i); if (el) el.classList.remove('done'); }
+  // Limpar bloqueios
+  const bl = document.getElementById('blocks-list');
+  if (bl) bl.innerHTML = '';
   showView('dashboard'); // reset visual para Dashboard antes de mostrar login
   document.getElementById('auth-screen').classList.remove('hidden');
 }
@@ -1324,7 +1348,12 @@ function renderDashboard() {
   document.getElementById('m-today').textContent = todayApts.length;
   document.getElementById('m-pending').textContent = pending.length;
   document.getElementById('m-patients').textContent = patients.length;
-  document.getElementById('m-week').textContent = appointments.filter(a=>a.status!=='cancelled').length;
+  // Métrica "Esta semana" — segunda a domingo da semana atual
+  const wNow = new Date(), wDay = wNow.getDay();
+  const wMon = new Date(wNow); wMon.setDate(wNow.getDate() - (wDay === 0 ? 6 : wDay - 1));
+  const wSun = new Date(wMon); wSun.setDate(wMon.getDate() + 6);
+  const wFrom = wMon.toISOString().slice(0,10), wTo = wSun.toISOString().slice(0,10);
+  document.getElementById('m-week').textContent = appointments.filter(a => a.status !== 'cancelled' && a.date >= wFrom && a.date <= wTo).length;
 
   if (next) {
     const p = patients.find(x=>x.id===next.patientId);
@@ -1344,25 +1373,13 @@ function renderDashboard() {
   } else {
     listEl.innerHTML = todayApts.map(a => aptRow(a, true)).join('');
   }
+
+  // Receita mensal
+  renderRevenue();
 }
 
 // ── AGENDA ─────────────────────────────────────────────────────────────
-function renderAgenda() {
-  const d = currentDate;
-  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  document.getElementById('agenda-day-label').textContent = `${days[d.getDay()]}, ${d.getDate()}`;
-  document.getElementById('agenda-full-label').textContent = `${months[d.getMonth()]} de ${d.getFullYear()}`;
-
-  const ds = d.toISOString().slice(0,10);
-  const dayApts = appointments.filter(a => a.date === ds && a.status !== 'cancelled').sort((a,b)=>a.time.localeCompare(b.time));
-  const wrap = document.getElementById('apt-list-wrap');
-  if (!dayApts.length) {
-    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sem consultas</div><div class="empty-sub">Toque em + para agendar este dia</div></div>';
-  } else {
-    wrap.innerHTML = dayApts.map(a => aptRow(a, false)).join('');
-  }
-}
+// renderAgenda() agora está definida na secção VISTA SEMANAL logo abaixo
 
 function aptRow(a, compact) {
   const p = patients.find(x=>x.id===a.patientId);
@@ -1379,8 +1396,76 @@ function aptRow(a, compact) {
   </div>`;
 }
 
-function agendaNav(d) { currentDate = new Date(currentDate); currentDate.setDate(currentDate.getDate()+d); renderAgenda(); }
+function agendaNav(d) {
+  if (weekViewMode) {
+    currentDate = new Date(currentDate); currentDate.setDate(currentDate.getDate() + d * 7);
+  } else {
+    currentDate = new Date(currentDate); currentDate.setDate(currentDate.getDate() + d);
+  }
+  renderAgenda();
+}
 function agendaToday() { currentDate = new Date(); renderAgenda(); }
+
+// ── VISTA SEMANAL ──────────────────────────────────────────────────────
+let weekViewMode = false;
+function toggleWeekView() {
+  weekViewMode = !weekViewMode;
+  const btn = document.getElementById('week-view-btn');
+  if (btn) { btn.style.background = weekViewMode ? 'var(--accent)' : 'var(--surface-2)'; btn.style.color = weekViewMode ? '#fff' : ''; }
+  const prevBtn = document.getElementById('agenda-prev-btn');
+  const nextBtn = document.getElementById('agenda-next-btn');
+  if (prevBtn) prevBtn.title = weekViewMode ? 'Semana anterior' : 'Dia anterior';
+  if (nextBtn) nextBtn.title = weekViewMode ? 'Próxima semana' : 'Próximo dia';
+  renderAgenda();
+}
+
+function renderAgenda() {
+  weekViewMode ? renderWeekView() : renderDayView();
+}
+
+function renderDayView() {
+  const d = currentDate;
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  document.getElementById('agenda-day-label').textContent = `${days[d.getDay()]}, ${d.getDate()}`;
+  document.getElementById('agenda-full-label').textContent = `${months[d.getMonth()]} de ${d.getFullYear()}`;
+  const ds = d.toISOString().slice(0,10);
+  const dayApts = appointments.filter(a => a.date === ds && a.status !== 'cancelled').sort((a,b)=>a.time.localeCompare(b.time));
+  const wrap = document.getElementById('apt-list-wrap');
+  if (!dayApts.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sem consultas</div><div class="empty-sub">Toque em + para agendar este dia</div></div>';
+  } else {
+    wrap.innerHTML = dayApts.map(a => aptRow(a, false)).join('');
+  }
+}
+
+function renderWeekView() {
+  const d = currentDate;
+  // Encontrar a segunda-feira da semana atual
+  const day = d.getDay();
+  const mon = new Date(d); mon.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  document.getElementById('agenda-day-label').textContent = `${mon.getDate()} – ${sun.getDate()} ${months[sun.getMonth()]}`;
+  document.getElementById('agenda-full-label').textContent = `${sun.getFullYear()}`;
+  const today = new Date().toISOString().slice(0, 10);
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const nd = new Date(mon); nd.setDate(mon.getDate() + i);
+    const ds = nd.toISOString().slice(0, 10);
+    const isToday = ds === today;
+    const dayApts = appointments.filter(a => a.date === ds && a.status !== 'cancelled').sort((a,b)=>a.time.localeCompare(b.time));
+    html += `<div style="border-bottom:1px solid var(--border);padding:10px 16px;cursor:pointer" onclick="currentDate=new Date('${ds}T12:00:00');weekViewMode=true;toggleWeekView()">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${dayApts.length?'8px':'0'}">
+        <span style="font-weight:600;font-size:14px;color:${isToday?'var(--accent)':'var(--text)'}">${days[nd.getDay()]} ${nd.getDate()}/${nd.getMonth()+1}${isToday?' ·  Hoje':''}</span>
+        ${dayApts.length ? `<span style="background:var(--accent);color:#fff;border-radius:99px;padding:2px 8px;font-size:12px">${dayApts.length}</span>` : '<span style="font-size:12px;color:var(--text-muted)">—</span>'}
+      </div>
+      ${dayApts.map(a=>{const p=patients.find(x=>x.id===a.patientId);return `<div style="font-size:13px;color:var(--text-muted);padding:2px 0">${a.time} · ${esc(p?.name||'Paciente')}</div>`;}).join('')}
+    </div>`;
+  }
+  document.getElementById('apt-list-wrap').innerHTML = html || '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sem consultas esta semana</div></div>';
+}
 
 // ── PATIENTS ──────────────────────────────────────────────────────────
 function renderPatients() {
@@ -1397,7 +1482,7 @@ function renderPatients() {
       <div class="patient-name">${p.country==='PT'?'🇵🇹':'🇧🇷'} ${esc(p.name)}</div>
       <div class="patient-sub">${esc(p.city||'')}${p.wa?' · '+esc(p.wa):''}</div>
     </div>
-    <div class="patient-value">${esc(p.value)}€</div>
+    <div class="patient-value">${currencySymbol()} ${esc(p.value)}</div>
     <div style="font-size:18px;color:var(--border)">›</div>
   </div>`).join('');
 }
@@ -1420,6 +1505,10 @@ function openAptDetail(id) {
   const waMsg = buildMsg(p,a,day,timePt,timeBr);
   const statusLabel = {confirmed:'✅ Confirmado',pending:'⏳ Aguardando',cancelled:'❌ Cancelado'}[a.status];
 
+  const paidLabel = a.paid
+    ? '<span style="color:var(--success);font-weight:600">✅ Pago</span>'
+    : '<span style="color:var(--warning-text)">⏳ Pendente — toque para marcar</span>';
+
   document.getElementById('sheet-detail-title').textContent = p.name;
   document.getElementById('sheet-detail-body').innerHTML = `
     <div class="detail-header">
@@ -1440,20 +1529,33 @@ function openAptDetail(id) {
     <div class="detail-field"><div class="detail-field-icon">📞</div><div><div class="detail-field-lbl">WhatsApp</div><div class="detail-field-val" style="color:var(--accent)">${esc(p.wa)}</div></div></div>
     <div class="detail-field"><div class="detail-field-icon">💻</div><div><div class="detail-field-lbl">Meet</div><div class="detail-field-val" style="color:var(--accent)">${esc(a.meet||p.meet||'—')}</div></div></div>
     <div class="detail-field"><div class="detail-field-icon">📋</div><div><div class="detail-field-lbl">Status</div><div class="detail-field-val">${statusLabel}</div></div></div>
-    ${p.notes?`<div class="detail-field"><div class="detail-field-icon">📝</div><div><div class="detail-field-lbl">Notas</div><div class="detail-field-val">${esc(p.notes)}</div></div></div>`:''}
 
-    <div style="margin-top:16px">
-      <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:8px">MENSAGEM WHATSAPP</div>
-      <textarea id="wa-msg-preview" style="width:100%;min-height:140px;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;line-height:1.6;font-family:inherit;background:var(--bg);resize:vertical"></textarea>
+    <!-- Pagamento por sessão — toque para alternar -->
+    <div class="detail-field" style="cursor:pointer" onclick="togglePaid('${esc(a.id)}')">
+      <div class="detail-field-icon">💰</div>
+      <div><div class="detail-field-lbl">Pagamento · ${currencySymbol()} ${esc(p.value)}</div><div class="detail-field-val" id="paid-status-${esc(a.id)}">${paidLabel}</div></div>
+    </div>
+
+    <!-- Notas clínicas desta sessão -->
+    <div style="margin-top:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;letter-spacing:.5px">NOTAS DA SESSÃO</div>
+      <textarea id="session-notes-ta" style="width:100%;min-height:100px;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;line-height:1.6;font-family:inherit;background:var(--bg);resize:vertical" placeholder="Anotações clínicas privadas desta sessão...">${esc(a.notes||'')}</textarea>
+      <button class="btn btn-outline btn-sm" style="margin-top:6px;width:100%" onclick="saveSessionNotes('${esc(a.id)}')">💾 Salvar notas</button>
+    </div>
+
+    <div style="margin-top:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;letter-spacing:.5px">MENSAGEM WHATSAPP</div>
+      <textarea id="wa-msg-preview" style="width:100%;min-height:120px;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;line-height:1.6;font-family:inherit;background:var(--bg);resize:vertical"></textarea>
     </div>
   `;
-  // Usar textContent para o textarea evita XSS na mensagem WhatsApp
+  // Usar .value para o textarea evita XSS
   const ta = document.getElementById('wa-msg-preview');
   if (ta) ta.value = waMsg;
   document.getElementById('sheet-detail-foot').innerHTML = `
     <button class="btn btn-wa" style="flex:2" onclick="sendWa('${esc(p.wa)}')">💬 WhatsApp</button>
-    <button class="btn btn-outline" style="flex:1" onclick="copyWaMsg()">📋 Copiar</button>
-    <a class="btn btn-outline btn-sm" title="Adicionar ao Google Calendar" href="${esc(makeGcalUrl(a, p))}" target="_blank" rel="noopener" style="text-decoration:none">📅</a>
+    <button class="btn btn-outline btn-sm" style="flex:1" onclick="copyWaMsg()">📋</button>
+    <a class="btn btn-outline btn-sm" title="Google Calendar" href="${esc(makeGcalUrl(a, p))}" target="_blank" rel="noopener" style="text-decoration:none">📅</a>
+    <button class="btn btn-secondary btn-sm" title="Editar consulta" onclick="closeSheet('sheet-detail');openEditApt('${esc(a.id)}')">✏️</button>
     <button class="btn btn-danger btn-sm" onclick="cancelApt('${esc(a.id)}')">✕</button>
   `;
   openSheet('sheet-detail');
@@ -1473,7 +1575,7 @@ function openPatientDetail(id) {
       </div>
     </div>
     <div class="detail-field"><div class="detail-field-icon">📞</div><div><div class="detail-field-lbl">WhatsApp</div><div class="detail-field-val" style="color:var(--accent)">${esc(p.wa)}</div></div></div>
-    <div class="detail-field"><div class="detail-field-icon">💰</div><div><div class="detail-field-lbl">Valor</div><div class="detail-field-val">${esc(p.value)}€ · ${esc(p.payment)}</div></div></div>
+    <div class="detail-field"><div class="detail-field-icon">💰</div><div><div class="detail-field-lbl">Valor</div><div class="detail-field-val">${currencySymbol()} ${esc(p.value)} · ${esc(p.payment)}</div></div></div>
     ${p.meet?`<div class="detail-field"><div class="detail-field-icon">💻</div><div><div class="detail-field-lbl">Meet</div><div class="detail-field-val" style="color:var(--accent)">${esc(p.meet)}</div></div></div>`:''}
     ${nextApt?`<div class="detail-field"><div class="detail-field-icon">📅</div><div><div class="detail-field-lbl">Próxima</div><div class="detail-field-val">${esc(nextApt.date)} às ${esc(nextApt.time)}</div></div></div>`:''}
     ${p.notes?`<div class="detail-field"><div class="detail-field-icon">📝</div><div><div class="detail-field-lbl">Notas</div><div class="detail-field-val">${esc(p.notes)}</div></div></div>`:''}
@@ -1495,8 +1597,33 @@ function openNewApt(date) {
   document.getElementById('apt-time').value = '10:00';
   document.getElementById('apt-meet').value = '';
   document.getElementById('apt-notes').value = '';
-  document.getElementById('apt-send-wa').checked = true;
+  // Checkbox WA: default = preferência salva em Settings
+  const waEl = document.getElementById('tog-wa');
+  document.getElementById('apt-send-wa').checked = !waEl || waEl.checked;
+  // Mostrar opção de sessões recorrentes (apenas em nova consulta)
+  const recurRow = document.getElementById('apt-recur-row');
+  if (recurRow) { recurRow.style.display = ''; document.getElementById('apt-recur').value = '1'; }
   populatePatientSelect();
+  updateBrPreview();
+  openSheet('sheet-apt');
+}
+
+function openEditApt(id) {
+  const a = appointments.find(x => x.id === id);
+  if (!a) return;
+  editingAptId = id;
+  document.getElementById('sheet-apt-title').textContent = 'Editar consulta';
+  document.getElementById('apt-date').value = a.date;
+  document.getElementById('apt-time').value = a.time;
+  document.getElementById('apt-type').value = a.type || 'Terapia cognitiva';
+  document.getElementById('apt-freq').value = a.freq || 'Semanal';
+  document.getElementById('apt-meet').value = a.meet || '';
+  document.getElementById('apt-notes').value = a.notes || '';
+  document.getElementById('apt-send-wa').checked = false; // não enviar WA ao editar
+  // Ocultar sessões recorrentes ao editar
+  const recurRow = document.getElementById('apt-recur-row');
+  if (recurRow) recurRow.style.display = 'none';
+  populatePatientSelect(a.patientId);
   updateBrPreview();
   openSheet('sheet-apt');
 }
@@ -1526,13 +1653,17 @@ async function saveApt() {
   const date = document.getElementById('apt-date').value;
   const time = document.getElementById('apt-time').value;
   if (!pid||!date||!time) { showToast('Preencha os campos obrigatórios','warn'); return; }
+  // Preservar status existente ao editar; 'pending' só para novas consultas
+  const existingStatus = editingAptId
+    ? (appointments.find(a => a.id === editingAptId)?.status || 'pending')
+    : 'pending';
   const data = {
     patientId:pid, date, time,
     type: document.getElementById('apt-type').value,
     freq: document.getElementById('apt-freq').value,
     meet: document.getElementById('apt-meet').value,
     notes: document.getElementById('apt-notes').value,
-    status: 'pending',
+    status: existingStatus,
   };
   if (editingAptId) {
     const r = await apiPut('/appointments/'+editingAptId, data);
@@ -1540,10 +1671,15 @@ async function saveApt() {
     appointments = appointments.map(a => a.id===editingAptId ? {...a,...data} : a);
     showToast('Consulta atualizada!','success');
   } else {
-    const r = await apiPost('/appointments', data);
-    const saved = r || { ...data, id: 'a'+Date.now() };
-    appointments.push(saved);
-    showToast('Consulta agendada!','success');
+    // Sessões recorrentes: criar N consultas semanalmente
+    const recurCount = parseInt(document.getElementById('apt-recur')?.value || '1');
+    const baseDate = new Date(date + 'T12:00:00');
+    for (let i = 0; i < recurCount; i++) {
+      const nd = new Date(baseDate); nd.setDate(baseDate.getDate() + i * 7);
+      const r = await apiPost('/appointments', { ...data, date: nd.toISOString().slice(0,10) });
+      appointments.push(r || { ...data, date: nd.toISOString().slice(0,10), id: 'a'+Date.now()+i });
+    }
+    showToast(recurCount > 1 ? `${recurCount} sessões agendadas! ✅` : 'Consulta agendada!', 'success');
   }
   closeSheet('sheet-apt');
   currentDate = new Date(date+'T12:00:00');
@@ -1565,6 +1701,68 @@ async function cancelApt(id) {
   appointments = appointments.map(a=>a.id===(id||selectedAptId)?{...a,status:'cancelled'}:a);
   closeSheet('sheet-detail'); renderDashboard(); renderAgenda();
   showToast('Consulta cancelada','info');
+}
+
+// ── PAGAMENTO POR SESSÃO ───────────────────────────────────────────────
+async function togglePaid(id) {
+  const a = appointments.find(x => x.id === id);
+  if (!a) return;
+  const newPaid = !a.paid;
+  const r = await apiPut('/appointments/' + id, { paid: newPaid });
+  if (!r) { showToast('Erro ao salvar pagamento', 'error'); return; }
+  appointments = appointments.map(x => x.id === id ? { ...x, paid: newPaid } : x);
+  const el = document.getElementById('paid-status-' + id);
+  if (el) el.innerHTML = newPaid
+    ? '<span style="color:var(--success);font-weight:600">✅ Pago</span>'
+    : '<span style="color:var(--warning-text)">⏳ Pendente — toque para marcar</span>';
+  showToast(newPaid ? '✅ Pagamento registado!' : 'Pagamento desmarcado', newPaid ? 'success' : 'info');
+  renderDashboard();
+}
+
+// ── NOTAS CLÍNICAS POR SESSÃO ─────────────────────────────────────────
+async function saveSessionNotes(id) {
+  const notes = document.getElementById('session-notes-ta')?.value || '';
+  const r = await apiPut('/appointments/' + id, { notes });
+  if (!r) { showToast('Erro ao salvar notas', 'error'); return; }
+  appointments = appointments.map(a => a.id === id ? { ...a, notes } : a);
+  showToast('Notas salvas!', 'success');
+}
+
+// ── RELATÓRIO DE RECEITA ───────────────────────────────────────────────
+function renderRevenue() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  const monthEnd   = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
+  const label = now.toLocaleDateString('pt-PT', {month:'long', year:'numeric'});
+  const el = document.getElementById('revenue-month-label');
+  if (el) el.textContent = label;
+  const monthApts = appointments.filter(a => a.status === 'confirmed' && a.date >= monthStart && a.date <= monthEnd);
+  const sym = currencySymbol();
+  let total = 0;
+  const byPatient = {};
+  monthApts.forEach(a => {
+    const p = patients.find(x => x.id === a.patientId);
+    const val = parseFloat((p?.value || '0').replace(',','.')) || 0;
+    total += val;
+    const name = p?.name || 'Desconhecido';
+    byPatient[name] = (byPatient[name] || 0) + val;
+  });
+  const rows = Object.entries(byPatient)
+    .sort((a,b) => b[1]-a[1])
+    .map(([name, val]) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:14px">${esc(name)}</span>
+        <span style="font-weight:600;color:var(--accent)">${sym} ${val.toFixed(2)}</span>
+      </div>`).join('');
+  const revenue = document.getElementById('dash-revenue');
+  if (!revenue) return;
+  revenue.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:12px;border-bottom:2px solid var(--border);margin-bottom:8px">
+      <span style="font-size:13px;color:var(--text-muted)">${monthApts.length} confirmada(s)</span>
+      <span style="font-size:24px;font-weight:700;color:var(--accent)">${sym} ${total.toFixed(2)}</span>
+    </div>
+    ${rows || '<div style="font-size:13px;color:var(--text-muted);padding:10px 0">Sem consultas confirmadas este mês</div>'}
+  `;
 }
 
 // ── LISTA DE PAÍSES (prefixo telefónico) ──────────────────────────────
@@ -1809,7 +2007,9 @@ async function savePatient() {
   const number = document.getElementById('p-wa-number').value.trim();
   const wa = prefix + number; // número completo com prefixo
   const value = document.getElementById('p-value').value.trim();
-  if (!name||!wa||!value) { showToast('Preencha nome, WhatsApp e valor','warn'); return; }
+  if (!name) { showToast('Preencha o nome do paciente','warn'); return; }
+  if (!number) { showToast('Preencha o número do WhatsApp','warn'); return; }
+  if (!value) { showToast('Preencha o valor da sessão','warn'); return; }
   const data = { name, whatsapp: wa, value, country:document.getElementById('p-country').value, city:document.getElementById('p-city').value, email:document.getElementById('p-email').value, payment:document.getElementById('p-payment').value, meet:document.getElementById('p-meet').value, notes:document.getElementById('p-notes').value };
   if (editingPatientId) {
     const r = await apiPut('/patients/'+editingPatientId, data);
@@ -1906,13 +2106,19 @@ function copyAllSlots() {
 
 // ── TZ CONVERTER ───────────────────────────────────────────────────────
 function doConvert() {
-  const t = document.getElementById('tz-conv-input')?.value; if(!t) return;
-  const [h,m] = t.split(':').map(Number);
+  const t = document.getElementById('tz-conv-input')?.value; if (!t) return;
+  const [h, m] = t.split(':').map(Number);
   const dir = document.getElementById('tz-conv-dir').value;
-  const oh = dir==='pt2br' ? (h-4+24)%24 : (h+4)%24;
-  const fmt = n=>String(n).padStart(2,'0');
+  const today = new Date().toISOString().slice(0, 10);
+  const fmt = n => String(n).padStart(2, '0');
+  // Calcular diferença real (DST-aware) entre PT e BR
+  const ref = new Date(`${today}T12:00:00Z`);
+  const ptH = parseInt(new Intl.DateTimeFormat('en',{timeZone:'Europe/Lisbon',hour:'2-digit',hour12:false}).format(ref));
+  const brH = parseInt(new Intl.DateTimeFormat('en',{timeZone:'America/Sao_Paulo',hour:'2-digit',hour12:false}).format(ref));
+  const diff = ((ptH - brH) + 24) % 24; // PT está sempre à frente de BR
+  const oh = dir === 'pt2br' ? (h - diff + 24) % 24 : (h + diff) % 24;
   const from = dir==='pt2br'?'🇵🇹 Portugal':'🇧🇷 Brasília';
-  const to = dir==='pt2br'?'🇧🇷 Brasília':'🇵🇹 Portugal';
+  const to   = dir==='pt2br'?'🇧🇷 Brasília':'🇵🇹 Portugal';
   document.getElementById('tz-conv-result').textContent = `${from} ${fmt(h)}:${fmt(m)} → ${to} ${fmt(oh)}:${fmt(m)}`;
 }
 
@@ -1927,16 +2133,52 @@ function saveBlock() {
   const bl = document.getElementById('blocks-list');
   const d = document.createElement('div');
   d.className = 'block-item';
-  d.innerHTML = `<div class="block-info"><div class="block-title">${desc}</div><div class="block-sub">${start}${end&&end!==start?' a '+end:''} · ${ts}–${te}</div></div><button class="block-remove" onclick="this.closest('.block-item').remove();showToast('Bloqueio removido')">✕</button>`;
+  d.innerHTML = `<div class="block-info"><div class="block-title">${esc(desc)}</div><div class="block-sub">${esc(start)}${end&&end!==start?' a '+esc(end):''} · ${esc(ts)}–${esc(te)}</div></div><button class="block-remove" onclick="removeBlock(this)">✕</button>`;
   bl.appendChild(d);
   closeSheet('sheet-block');
   showToast('Bloqueio adicionado!','success');
+  persistBlocks();
+}
+
+function removeBlock(btn) {
+  btn.closest('.block-item').remove();
+  showToast('Bloqueio removido');
+  persistBlocks();
+}
+
+async function persistBlocks() {
+  const items = [...document.querySelectorAll('#blocks-list .block-item')].map(el => ({
+    title: el.querySelector('.block-title')?.textContent || '',
+    sub:   el.querySelector('.block-sub')?.textContent  || '',
+  }));
+  // Mostrar/esconder placeholder vazio
+  const empty = document.getElementById('blocks-empty');
+  if (empty) empty.style.display = items.length ? 'none' : '';
+  userSettings.blocks = JSON.stringify(items);
+  await apiPut('/settings', { blocks: JSON.stringify(items) });
 }
 
 // ── CHECKLIST ────────────────────────────────────────────────────────
 function toggleCheck(i) {
   const el = document.getElementById('chk'+i);
+  if (!el) return;
   el.classList.toggle('done');
+  // Persistir estado no localStorage
+  const state = {};
+  for (let j = 0; j <= 6; j++) {
+    const e = document.getElementById('chk'+j);
+    if (e) state[j] = e.classList.contains('done');
+  }
+  localStorage.setItem('td_checklist', JSON.stringify(state));
+}
+function loadChecklistState() {
+  try {
+    const state = JSON.parse(localStorage.getItem('td_checklist') || '{}');
+    Object.keys(state).forEach(j => {
+      const el = document.getElementById('chk'+j);
+      if (el) el.classList.toggle('done', !!state[j]);
+    });
+  } catch {}
 }
 
 // ── FOCUS TIMER ──────────────────────────────────────────────────────
@@ -1976,6 +2218,20 @@ function updateFocusDisplay() {
 // ── SETTINGS ─────────────────────────────────────────────────────────
 function updateName() { renderDashboard(); }
 
+function currencySymbol() {
+  const el = document.getElementById('cfg-currency');
+  return (el && el.value === 'BRL') ? 'R$' : '€';
+}
+
+function saveProfileSettings() {
+  // Sincronizar duração de sessão com Focus Timer
+  const dur = parseInt(document.getElementById('cfg-dur')?.value) || 50;
+  if (focusDur !== dur) { focusDur = dur; focusReset(); }
+  renderPatients();    // Aplicar nova moeda
+  renderDashboard();   // Aplicar novo nome
+  saveReminderSettings(); // Persistir tudo no backend
+}
+
 // ── LEMBRETES ─────────────────────────────────────────────────────────
 let userSettings = {};
 
@@ -1988,15 +2244,62 @@ async function loadReminderSettings() {
   setChk('tog-rem1h',     'rem1h');
   setChk('tog-rem15m',    'rem15m');
   setChk('tog-remPayment','remPayment');
+  // Toggle WA: se ainda não foi salvo, manter checked (padrão)
+  if (data.waEnabled !== undefined) setChk('tog-wa', 'waEnabled');
+  // Configurações de perfil
+  if (data.sessionDur) {
+    const dur = document.getElementById('cfg-dur');
+    if (dur) { dur.value = data.sessionDur; focusDur = parseInt(data.sessionDur) || 50; focusReset(); }
+  }
+  if (data.currency) {
+    const cur = document.getElementById('cfg-currency');
+    if (cur) { cur.value = data.currency; renderPatients(); }
+  }
+  if (data.profileName) {
+    const nm = document.getElementById('cfg-name');
+    if (nm) nm.value = data.profileName; // nome de exibição preferido sempre prevalece
+    renderDashboard();
+  }
+  // Restaurar bloqueios de agenda
+  if (data.blocks) {
+    try {
+      const items = JSON.parse(data.blocks);
+      const bl = document.getElementById('blocks-list');
+      if (bl && Array.isArray(items) && items.length) {
+        const empty = document.getElementById('blocks-empty');
+        if (empty) empty.style.display = 'none';
+        bl.innerHTML = items.map(item => `
+          <div class="block-item">
+            <div class="block-info">
+              <div class="block-title">${esc(item.title)}</div>
+              <div class="block-sub">${esc(item.sub)}</div>
+            </div>
+            <button class="block-remove" onclick="removeBlock(this)">✕</button>
+          </div>`).join('');
+      }
+    } catch {}
+  }
+  // Restaurar template de WhatsApp
+  if (data.waTemplate) {
+    waTemplate = data.waTemplate;
+    const ta = document.getElementById('wa-template');
+    if (ta) ta.value = data.waTemplate;
+  }
+  loadChecklistState();
 }
 
 async function saveReminderSettings() {
-  const get = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+  const get    = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+  const getVal = id => { const el = document.getElementById(id); return el ? el.value : null; };
   const settings = {
-    rem24h:     get('tog-rem24h'),
-    rem1h:      get('tog-rem1h'),
-    rem15m:     get('tog-rem15m'),
-    remPayment: get('tog-remPayment'),
+    rem24h:      get('tog-rem24h'),
+    rem1h:       get('tog-rem1h'),
+    rem15m:      get('tog-rem15m'),
+    remPayment:  get('tog-remPayment'),
+    waEnabled:   get('tog-wa'),
+    sessionDur:  getVal('cfg-dur'),
+    currency:    getVal('cfg-currency'),
+    profileName: getVal('cfg-name'),
   };
   userSettings = { ...userSettings, ...settings };
   await apiPut('/settings', settings);
@@ -2114,8 +2417,17 @@ function makeGcalUrl(apt, pat) {
 }
 
 function insertTag(tag) { const ta=document.getElementById('wa-template'); const s=ta.selectionStart; ta.value=ta.value.slice(0,s)+tag+ta.value.slice(ta.selectionEnd); ta.selectionStart=ta.selectionEnd=s+tag.length; ta.focus(); }
-function saveTemplate() { waTemplate=document.getElementById('wa-template').value; showToast('Template salvo!','success'); }
-function resetTemplate() { document.getElementById('wa-template').value=DEFAULT_TEMPLATE; waTemplate=DEFAULT_TEMPLATE; showToast('Template restaurado','info'); }
+async function saveTemplate() {
+  waTemplate = document.getElementById('wa-template').value;
+  await apiPut('/settings', { waTemplate });
+  showToast('Template salvo!','success');
+}
+async function resetTemplate() {
+  document.getElementById('wa-template').value = DEFAULT_TEMPLATE;
+  waTemplate = DEFAULT_TEMPLATE;
+  await apiPut('/settings', { waTemplate: DEFAULT_TEMPLATE });
+  showToast('Template restaurado','info');
+}
 
 // ── SHEETS ────────────────────────────────────────────────────────────
 function openSheet(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }

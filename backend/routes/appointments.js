@@ -13,6 +13,7 @@ const map = (r) => ({
   status: r.status,
   meet: r.meet,
   notes: r.notes,
+  paid: r.paid || false,
 });
 
 // GET /api/appointments?date=YYYY-MM-DD | ?from=&to=
@@ -78,13 +79,14 @@ router.put('/:id', async (req, res) => {
   const status    = b.status  ?? e.status ?? 'pending';
   const meet      = b.meet    ?? e.meet   ?? '';
   const notes     = b.notes   ?? e.notes  ?? '';
+  const paid      = b.paid    !== undefined ? b.paid : (e.paid || false);
 
   const { rows } = await pool.query(
     `UPDATE appointments
-     SET patient_id=$1, date=$2, time=$3, type=$4, freq=$5, status=$6, meet=$7, notes=$8
-     WHERE id=$9 AND therapist_id=$10
+     SET patient_id=$1, date=$2, time=$3, type=$4, freq=$5, status=$6, meet=$7, notes=$8, paid=$9
+     WHERE id=$10 AND therapist_id=$11
      RETURNING *`,
-    [patientId, date, time, type, freq, status, meet, notes, req.params.id, req.user.id]
+    [patientId, date, time, type, freq, status, meet, notes, paid, req.params.id, req.user.id]
   );
   // Se data ou hora mudou, resetar flags de lembrete
   if (b.date || b.time) resetReminderFlags(req.params.id).catch(console.error);
