@@ -1,4 +1,4 @@
-const CACHE = 'therapydesk-v3';
+const CACHE = 'therapydesk-v4';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 
 self.addEventListener('install', e => {
@@ -12,11 +12,20 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('/api/')) return; // never cache API calls
+  const url = e.request.url;
+  // Só cachear GET de http/https — nunca chrome-extension, POST, API calls, googleapis
+  if (e.request.method !== 'GET') return;
+  if (!url.startsWith('http')) return;
+  if (url.includes('/api/')) return;
+  if (url.includes('googleapis.com')) return;
+  if (url.includes('accounts.google.com')) return;
+
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy));
+      if (res && res.status === 200 && res.type !== 'opaque') {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));
+      }
       return res;
     }))
   );
