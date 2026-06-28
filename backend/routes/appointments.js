@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { pool } = require('../db');
+const { resetReminderFlags } = require('../cron/reminders');
 
 // PostgreSQL devolve Date/Time como objetos — normaliza para strings
 const map = (r) => ({
@@ -85,6 +86,8 @@ router.put('/:id', async (req, res) => {
      RETURNING *`,
     [patientId, date, time, type, freq, status, meet, notes, req.params.id, req.user.id]
   );
+  // Se data ou hora mudou, resetar flags de lembrete
+  if (b.date || b.time) resetReminderFlags(req.params.id).catch(console.error);
   res.json(map(rows[0]));
 });
 

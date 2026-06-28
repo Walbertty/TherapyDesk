@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { initSchema } = require('./db');
+const { startCronJobs } = require('./cron/reminders');
 const authMiddleware = require('./middleware/auth');
 
 const app = express();
@@ -76,6 +77,7 @@ app.use((err, req, res, next) => {
 // ── START ─────────────────────────────────────────────────────────────────
 initSchema()
   .then(() => {
+    startCronJobs();
     app.listen(PORT, () => {
       console.log(`🚀 TherapyDesk API → http://localhost:${PORT}`);
     });

@@ -12,8 +12,6 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>TherapyDesk</title>
-  <script src="https://accounts.google.com/gsi/client" async></script>
-
   <style>
     /* ── RESET & BASE ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -782,15 +780,11 @@
             <label class="toggle"><input type="checkbox" id="tog-gcal" onchange="toggleGcal()"><span class="toggle-slider"></span></label>
           </div>
           <div id="gcal-connect" class="hidden" style="padding:10px 16px 14px;border-top:1px solid var(--border)">
-            <div id="gcal-status" style="font-size:13px;color:var(--text-muted);margin-bottom:12px">⚪ Não conectado</div>
-            <div class="form-group" style="margin-bottom:10px">
-              <label class="form-label" style="font-size:12px">Client ID do Google</label>
-              <input type="text" class="form-input" id="gcal-client-id" placeholder="xxxxx.apps.googleusercontent.com" style="font-size:13px" oninput="localStorage.setItem('td_gcal_client_id',this.value)">
-              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">📌 Criar em: <span style="color:var(--accent)">console.cloud.google.com</span> → Credenciais → OAuth 2.0</div>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-outline btn-sm" style="flex:1" onclick="connectGoogle()">🔗 Conectar</button>
-              <button class="btn btn-primary btn-sm" style="flex:1" onclick="gcalSyncAll()" id="gcal-sync-btn" disabled>📅 Sincronizar tudo</button>
+            <div style="font-size:13px;color:var(--text-muted);line-height:1.5">
+              📅 Ao abrir o detalhe de qualquer consulta, clique no botão
+              <strong style="color:var(--accent)">📅 Google Calendar</strong>
+              para adicionar o evento diretamente na sua agenda Google.<br>
+              <span style="font-size:12px">Não é necessária nenhuma configuração.</span>
             </div>
           </div>
           <div class="integration-row">
@@ -806,10 +800,25 @@
         <div class="settings-title">Lembretes</div>
         <div class="settings-card" style="border-radius:var(--radius);box-shadow:var(--shadow)">
           <div class="card-body">
-            <div class="toggle-row"><div><div class="toggle-label">Lembrar paciente 24h antes</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div class="toggle-row"><div><div class="toggle-label">Lembrar paciente 1h antes</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div class="toggle-row"><div><div class="toggle-label">Me lembrar 15 min antes</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div class="toggle-row"><div><div class="toggle-label">Alertar pagamentos pendentes</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Lembrar paciente 24h antes</div><div class="toggle-sub" style="font-size:11px;color:var(--text-muted)">E-mail automático ao paciente</div></div>
+              <label class="toggle"><input type="checkbox" id="tog-rem24h" onchange="saveReminderSettings()"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Lembrar paciente 1h antes</div><div class="toggle-sub" style="font-size:11px;color:var(--text-muted)">E-mail automático ao paciente</div></div>
+              <label class="toggle"><input type="checkbox" id="tog-rem1h" onchange="saveReminderSettings()"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Me lembrar 15 min antes</div><div class="toggle-sub" style="font-size:11px;color:var(--text-muted)">Notificação no dispositivo</div></div>
+              <label class="toggle"><input type="checkbox" id="tog-rem15m" onchange="toggleRem15m()"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Alertar pagamentos pendentes</div><div class="toggle-sub" style="font-size:11px;color:var(--text-muted)">E-mail semanal + notificação no app</div></div>
+              <label class="toggle"><input type="checkbox" id="tog-remPayment" onchange="toggleRemPayment()"><span class="toggle-slider"></span></label>
+            </div>
+            <div id="notif-permission-note" style="display:none;margin-top:10px;padding:10px 12px;background:var(--warning-bg,#FFFBEB);border-radius:var(--radius-sm);font-size:12px;color:var(--warning-text,#92400E)">
+              ⚠️ Permissão de notificações negada. Verifique as definições do browser.
+            </div>
           </div>
         </div>
       </div>
@@ -1217,7 +1226,10 @@ function saveSession(token, user) {
   document.getElementById('cfg-name').value = user.name;
   const info = document.getElementById('cfg-account-info');
   if (info) info.textContent = `Logado como ${user.name} (${user.email})`;
-  loadData().then(() => { renderDashboard(); renderAgenda(); renderPatients(); });
+  loadData().then(() => {
+    renderDashboard(); renderAgenda(); renderPatients();
+    loadReminderSettings().then(() => { scheduleNotifications(); checkPaymentAlert(); });
+  });
 }
 
 function logout() {
@@ -1423,7 +1435,7 @@ function openAptDetail(id) {
   document.getElementById('sheet-detail-foot').innerHTML = `
     <button class="btn btn-wa" style="flex:2" onclick="sendWa('${p.wa}')">💬 WhatsApp</button>
     <button class="btn btn-outline" style="flex:1" onclick="copyWaMsg()">📋 Copiar</button>
-    ${gcalToken ? `<button class="btn btn-outline btn-sm" title="Adicionar ao Google Calendar" onclick="addToCalendar(appointments.find(x=>x.id==='${a.id}')).then(ok=>{ if(ok) showToast('✅ Adicionado ao Calendar!','success'); })">📅</button>` : ''}
+    <a class="btn btn-outline btn-sm" title="Adicionar ao Google Calendar" href="${makeGcalUrl(a, pat)}" target="_blank" rel="noopener" style="text-decoration:none">📅</a>
     <button class="btn btn-danger btn-sm" onclick="cancelApt('${a.id}')">✕</button>
   `;
   openSheet('sheet-detail');
@@ -1945,120 +1957,142 @@ function updateFocusDisplay() {
 
 // ── SETTINGS ─────────────────────────────────────────────────────────
 function updateName() { renderDashboard(); }
+
+// ── LEMBRETES ─────────────────────────────────────────────────────────
+let userSettings = {};
+
+async function loadReminderSettings() {
+  const data = await apiGet('/settings');
+  if (!data) return;
+  userSettings = data;
+  const setChk = (id, key) => { const el = document.getElementById(id); if (el) el.checked = !!data[key]; };
+  setChk('tog-rem24h',    'rem24h');
+  setChk('tog-rem1h',     'rem1h');
+  setChk('tog-rem15m',    'rem15m');
+  setChk('tog-remPayment','remPayment');
+}
+
+async function saveReminderSettings() {
+  const get = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+  const settings = {
+    rem24h:     get('tog-rem24h'),
+    rem1h:      get('tog-rem1h'),
+    rem15m:     get('tog-rem15m'),
+    remPayment: get('tog-remPayment'),
+  };
+  userSettings = { ...userSettings, ...settings };
+  await apiPut('/settings', settings);
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    showToast('Notificações não são suportadas neste browser', 'error');
+    return false;
+  }
+  if (Notification.permission === 'granted') return true;
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') {
+    document.getElementById('notif-permission-note').style.display = '';
+    return false;
+  }
+  document.getElementById('notif-permission-note').style.display = 'none';
+  return true;
+}
+
+async function toggleRem15m() {
+  const el = document.getElementById('tog-rem15m');
+  if (el.checked) {
+    const ok = await requestNotifPermission();
+    if (!ok) { el.checked = false; return; }
+    showToast('✅ Vai receber notificação 15 min antes das consultas', 'success');
+    scheduleNotifications();
+  }
+  await saveReminderSettings();
+}
+
+async function toggleRemPayment() {
+  const el = document.getElementById('tog-remPayment');
+  if (el.checked) {
+    const ok = await requestNotifPermission();
+    if (!ok) { el.checked = false; return; }
+    showToast('✅ Receberá alertas de pagamentos pendentes', 'success');
+    checkPaymentAlert();
+  }
+  await saveReminderSettings();
+}
+
+// Agenda notificações via setTimeout para consultas do dia e do dia seguinte
+let _notifTimers = [];
+function scheduleNotifications() {
+  _notifTimers.forEach(t => clearTimeout(t));
+  _notifTimers = [];
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!userSettings.rem15m) return;
+
+  const now = Date.now();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const tomorrowStr = new Date(now + 86400000).toISOString().slice(0, 10);
+
+  appointments
+    .filter(a => (a.date === todayStr || a.date === tomorrowStr) && a.status !== 'cancelled')
+    .forEach(a => {
+      const pat = patients.find(p => p.id === a.patientId) || {};
+      const aptMs = new Date(`${a.date}T${a.time}:00`).getTime();
+      const notifyMs = aptMs - 15 * 60 * 1000;
+      const delay = notifyMs - now;
+      if (delay > 0 && delay < 48 * 60 * 60 * 1000) {
+        const t = setTimeout(() => {
+          new Notification('Consulta em 15 minutos ⏰', {
+            body: `${pat.name || 'Paciente'} às ${a.time}`,
+            icon: '/icon.svg',
+            tag: `apt-${a.id}`,
+            requireInteraction: false,
+          });
+        }, delay);
+        _notifTimers.push(t);
+      }
+    });
+}
+
+// Alerta de pagamentos: verifica consultas de ontem sem pagamento registado
+function checkPaymentAlert() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!userSettings.remPayment) return;
+
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const pending = appointments.filter(a => a.date === yesterday && a.status === 'confirmed');
+  if (pending.length === 0) return;
+
+  new Notification(`💰 ${pending.length} consulta(s) ontem — verifique pagamentos`, {
+    body: pending.map(a => {
+      const p = patients.find(x => x.id === a.patientId);
+      return p ? p.name : '';
+    }).filter(Boolean).join(', '),
+    icon: '/icon.svg',
+    tag: 'payment-alert',
+    requireInteraction: true,
+  });
+}
+
 function toggleGcal() {
   const el = document.getElementById('gcal-connect');
   el.classList.toggle('hidden', !document.getElementById('tog-gcal').checked);
-  // Restaurar client ID salvo
-  const saved = localStorage.getItem('td_gcal_client_id');
-  if (saved) document.getElementById('gcal-client-id').value = saved;
-  gcalUpdateStatus();
 }
 
-// ── GOOGLE CALENDAR ───────────────────────────────────────────────────
-let gcalToken = null;
-let gcalTokenClient = null;
-
-function gcalUpdateStatus() {
-  const el = document.getElementById('gcal-status');
-  const btn = document.getElementById('gcal-sync-btn');
-  if (!el) return;
-  if (gcalToken) {
-    el.innerHTML = '🟢 Conta Google conectada';
-    el.style.color = 'var(--success-text,#166534)';
-    if (btn) btn.disabled = false;
-  } else {
-    el.innerHTML = '⚪ Não conectado';
-    el.style.color = 'var(--text-muted)';
-    if (btn) btn.disabled = true;
-  }
-}
-
-function connectGoogle() {
-  const clientId = (document.getElementById('gcal-client-id').value || '').trim();
-  if (!clientId) {
-    showToast('Cole o Client ID do Google Cloud primeiro', 'error');
-    return;
-  }
-  localStorage.setItem('td_gcal_client_id', clientId);
-
-  if (typeof google === 'undefined' || !google.accounts) {
-    showToast('Biblioteca Google ainda a carregar, aguarde...', 'error');
-    return;
-  }
-
-  gcalTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/calendar.events',
-    callback: (resp) => {
-      if (resp.error) {
-        showToast('Erro ao conectar: ' + resp.error, 'error');
-        return;
-      }
-      gcalToken = resp.access_token;
-      gcalUpdateStatus();
-      showToast('✅ Google Calendar conectado!', 'success');
-    },
-  });
-
-  gcalTokenClient.requestAccessToken({ prompt: 'consent' });
-}
-
-async function addToCalendar(apt) {
-  if (!gcalToken) { showToast('Conecte o Google Calendar primeiro', 'error'); return false; }
-
-  const pat = patients.find(p => p.id === (apt.patientId || apt.patient_id)) || {};
-  const dateStr = apt.date; // YYYY-MM-DD
-  const [h, m] = apt.time.split(':').map(Number);
-  const startDt = new Date(`${dateStr}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
-  const endDt = new Date(startDt.getTime() + 60 * 60 * 1000); // +1h
-
-  function toRFC3339(d) {
-    return d.toISOString().replace('.000','');
-  }
-
-  const event = {
-    summary: `Consulta — ${pat.name || 'Paciente'}`,
-    description: [
-      apt.type ? `Tipo: ${apt.type}` : '',
-      apt.meet ? `Link: ${apt.meet}` : '',
-      apt.notes ? `Notas: ${apt.notes}` : '',
-    ].filter(Boolean).join('\n'),
-    start: { dateTime: toRFC3339(startDt), timeZone: pat.country === 'BR' ? 'America/Sao_Paulo' : 'Europe/Lisbon' },
-    end:   { dateTime: toRFC3339(endDt),   timeZone: pat.country === 'BR' ? 'America/Sao_Paulo' : 'Europe/Lisbon' },
-    reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 30 }] },
-  };
-
-  try {
-    const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${gcalToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(event),
-    });
-    if (r.status === 401) { gcalToken = null; gcalUpdateStatus(); showToast('Sessão Google expirada. Reconecte.', 'error'); return false; }
-    if (!r.ok) { const e = await r.json(); console.warn('[gcal]', e); showToast('Erro ao criar evento no Calendar', 'error'); return false; }
-    return true;
-  } catch { showToast('Sem acesso à API do Google', 'error'); return false; }
-}
-
-async function gcalSyncAll() {
-  if (!gcalToken) { showToast('Conecte o Google Calendar primeiro', 'error'); return; }
-  const btn = document.getElementById('gcal-sync-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ A sincronizar...'; }
-
-  const today = new Date().toISOString().slice(0,10);
-  const upcoming = appointments.filter(a => a.date >= today && a.status !== 'cancelled');
-
-  let ok = 0, fail = 0;
-  for (const apt of upcoming) {
-    const success = await addToCalendar(apt);
-    if (success) ok++; else fail++;
-    if (!gcalToken) break; // token expirou
-  }
-
-  if (btn) { btn.disabled = false; btn.textContent = '📅 Sincronizar tudo'; }
-  if (ok > 0) showToast(`✅ ${ok} consulta(s) adicionada(s) ao Google Calendar!`, 'success');
-  if (fail > 0) showToast(`⚠️ ${fail} evento(s) falharam`, 'error');
-  if (ok === 0 && fail === 0) showToast('Nenhuma consulta futura para sincronizar', 'info');
+// ── GOOGLE CALENDAR (link direto — sem OAuth, funciona para qualquer utilizador) ──
+function makeGcalUrl(apt, pat) {
+  const d = apt.date.replace(/-/g, '');
+  const [h, m] = apt.time.split(':');
+  const endH = String((parseInt(h, 10) + 1) % 24).padStart(2, '0');
+  const start = `${d}T${h}${m}00`;
+  const end   = `${d}T${endH}${m}00`;
+  const title = encodeURIComponent(`Consulta — ${(pat && pat.name) ? pat.name : 'Paciente'}`);
+  const details = encodeURIComponent([
+    apt.type  ? `Tipo: ${apt.type}`  : '',
+    apt.meet  ? `Link: ${apt.meet}`  : '',
+    apt.notes ? `Notas: ${apt.notes}` : '',
+  ].filter(Boolean).join('\n'));
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`;
 }
 
 function insertTag(tag) { const ta=document.getElementById('wa-template'); const s=ta.selectionStart; ta.value=ta.value.slice(0,s)+tag+ta.value.slice(ta.selectionEnd); ta.selectionStart=ta.selectionEnd=s+tag.length; ta.focus(); }
@@ -2091,7 +2125,10 @@ if (TOKEN && currentUser) {
   const info = document.getElementById('cfg-account-info');
   if (info) info.textContent = `Logado como ${currentUser.name} (${currentUser.email})`;
   renderDashboard();
-  loadData().then(() => { renderDashboard(); renderAgenda(); renderPatients(); });
+  loadData().then(() => {
+    renderDashboard(); renderAgenda(); renderPatients();
+    loadReminderSettings().then(() => { scheduleNotifications(); checkPaymentAlert(); });
+  });
 } else {
   // Sem sessão — mostrar tela de login
   document.getElementById('auth-screen').classList.remove('hidden');
@@ -2104,12 +2141,6 @@ if (TOKEN && currentUser) {
 buildPrefixOptions();
 
 // Restaurar Client ID do Google Calendar se salvo
-const savedClientId = localStorage.getItem('td_gcal_client_id');
-if (savedClientId) {
-  const el = document.getElementById('gcal-client-id');
-  if (el) el.value = savedClientId;
-}
-
 // PWA service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
