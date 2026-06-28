@@ -158,9 +158,18 @@
     .metric {
       background: var(--surface); border-radius: var(--radius);
       box-shadow: var(--shadow); padding: 14px 16px;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+      border: 2px solid transparent; user-select: none;
     }
-    .metric-val { font-size: 26px; font-weight: 700; color: var(--accent); }
-    .metric-lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .metric:active { transform: scale(.96); }
+    .metric:hover { box-shadow: 0 4px 20px rgba(107,72,224,.18); border-color: var(--border); }
+    .metric-val { font-size: 26px; font-weight: 700; margin-bottom: 2px; }
+    .metric-lbl { font-size: 12px; color: var(--text-muted); }
+    .metric-arrow { font-size: 10px; color: var(--text-muted); float: right; margin-top: 2px; }
+    .metric.today   .metric-val { color: var(--accent); }
+    .metric.pending .metric-val { color: var(--warning); }
+    .metric.patients .metric-val { color: var(--success); }
+    .metric.week    .metric-val { color: #7C3AED; }
 
     /* ── APPOINTMENT ROWS ── */
     .apt-item {
@@ -542,7 +551,6 @@
   <!-- HEADER -->
   <div class="header">
     <div class="header-left">
-      <span class="header-logo">TD</span>
       <span class="header-title" id="header-title">Dashboard</span>
     </div>
     <div class="header-right" id="header-actions">
@@ -563,22 +571,38 @@
 
       <div class="clock-strip">
         <div class="clock-item">
-          <div class="clock-flag">🇵🇹</div>
-          <div class="clock-time" id="clk-pt">--:--</div>
-          <div class="clock-label">Portugal</div>
-        </div>
-        <div class="clock-item">
           <div class="clock-flag">🇧🇷</div>
           <div class="clock-time" id="clk-br">--:--</div>
           <div class="clock-label">Brasil</div>
         </div>
+        <div class="clock-item">
+          <div class="clock-flag">🇵🇹</div>
+          <div class="clock-time" id="clk-pt">--:--</div>
+          <div class="clock-label">Portugal</div>
+        </div>
       </div>
 
       <div class="metrics">
-        <div class="metric"><div class="metric-val" id="m-today">0</div><div class="metric-lbl">Hoje</div></div>
-        <div class="metric"><div class="metric-val" id="m-pending">0</div><div class="metric-lbl">A confirmar</div></div>
-        <div class="metric"><div class="metric-val" id="m-patients">0</div><div class="metric-lbl">Pacientes</div></div>
-        <div class="metric"><div class="metric-val" id="m-week">0</div><div class="metric-lbl">Esta semana</div></div>
+        <div class="metric today" onclick="goToToday()">
+          <span class="metric-arrow">›</span>
+          <div class="metric-val" id="m-today">0</div>
+          <div class="metric-lbl">Hoje</div>
+        </div>
+        <div class="metric pending" onclick="openPendingSheet()">
+          <span class="metric-arrow">›</span>
+          <div class="metric-val" id="m-pending">0</div>
+          <div class="metric-lbl">A confirmar</div>
+        </div>
+        <div class="metric patients" onclick="showView('patients')">
+          <span class="metric-arrow">›</span>
+          <div class="metric-val" id="m-patients">0</div>
+          <div class="metric-lbl">Pacientes</div>
+        </div>
+        <div class="metric week" onclick="showView('agenda')">
+          <span class="metric-arrow">›</span>
+          <div class="metric-val" id="m-week">0</div>
+          <div class="metric-lbl">Esta semana</div>
+        </div>
       </div>
 
       <div class="card" id="dash-alerts-card">
@@ -897,6 +921,18 @@ Qualquer dúvida estou à disposição!</textarea>
       <button class="btn btn-outline" onclick="closeSheet('sheet-block')" style="flex:1">Cancelar</button>
       <button class="btn btn-primary" onclick="saveBlock()" style="flex:2">✓ Salvar</button>
     </div>
+  </div>
+</div>
+
+<!-- Pending appointments sheet -->
+<div class="sheet-overlay" id="sheet-pending">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-title">⏳ A confirmar</span>
+      <button class="icon-btn" onclick="closeSheet('sheet-pending')">✕</button>
+    </div>
+    <div class="sheet-body" id="pending-list" style="max-height:60vh;overflow-y:auto"></div>
   </div>
 </div>
 
@@ -1410,6 +1446,46 @@ async function savePatient() {
     showToast('Paciente adicionado!','success');
   }
   closeSheet('sheet-patient'); renderPatients(); renderDashboard(); populatePatientSelect();
+}
+
+// ── METRIC SHORTCUTS ──────────────────────────────────────────────────
+function goToToday() {
+  // Vai para Agenda e posiciona no dia de hoje
+  currentDate = new Date();
+  showView('agenda');
+}
+
+function openPendingSheet() {
+  const pending = appointments.filter(a => a.status === 'pending');
+  const list = document.getElementById('pending-list');
+  if (!pending.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sem consultas a confirmar</div></div>';
+  } else {
+    list.innerHTML = pending.map(a => {
+      const p = patients.find(x => x.id === a.patientId);
+      const name = p?.name || 'Paciente';
+      return `
+      <div class="apt-item" style="border-left:3px solid var(--warning)">
+        <div class="apt-info">
+          <div class="apt-name">${name}</div>
+          <div class="apt-meta">${a.date} · ${a.time}${a.type ? ' · '+a.type : ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-primary btn-sm" onclick="confirmApt('${a.id}')">✓</button>
+          <button class="btn btn-danger btn-sm" onclick="cancelApt('${a.id}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  openSheet('sheet-pending');
+}
+
+async function confirmApt(id) {
+  await apiPut('/appointments/' + id, { status: 'confirmed' });
+  appointments = appointments.map(a => a.id === id ? { ...a, status: 'confirmed' } : a);
+  renderDashboard();
+  openPendingSheet(); // Atualiza a lista sem fechar
+  showToast('Consulta confirmada!', 'success');
 }
 
 async function deletePatient(id) {
