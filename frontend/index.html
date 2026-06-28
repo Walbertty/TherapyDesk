@@ -1062,6 +1062,17 @@ let focusRemaining = 50 * 60;
 let focusRunning = false;
 let focusDur = 50;
 
+// ── SEGURANÇA: escape de HTML para prevenir XSS ────────────────────────
+function esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── API HELPERS ────────────────────────────────────────────────────────
 function authHeader() {
   return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
@@ -1226,6 +1237,7 @@ function saveSession(token, user) {
   document.getElementById('cfg-name').value = user.name;
   const info = document.getElementById('cfg-account-info');
   if (info) info.textContent = `Logado como ${user.name} (${user.email})`;
+  showView('dashboard'); // sempre inicia no Dashboard
   loadData().then(() => {
     renderDashboard(); renderAgenda(); renderPatients();
     loadReminderSettings().then(() => { scheduleNotifications(); checkPaymentAlert(); });
@@ -1237,6 +1249,9 @@ function logout() {
   localStorage.removeItem('td_token');
   localStorage.removeItem('td_user');
   patients = []; appointments = [];
+  userSettings = {};
+  _notifTimers.forEach(t => clearTimeout(t)); _notifTimers = [];
+  showView('dashboard'); // reset visual para Dashboard antes de mostrar login
   document.getElementById('auth-screen').classList.remove('hidden');
 }
 
@@ -1352,12 +1367,12 @@ function renderAgenda() {
 function aptRow(a, compact) {
   const p = patients.find(x=>x.id===a.patientId);
   const dotClass = a.status==='confirmed' ? 'dot-green' : a.status==='pending' ? 'dot-amber' : 'dot-red';
-  return `<div class="apt-item" onclick="openAptDetail('${a.id}')">
-    <div class="apt-time">${a.time}</div>
-    <div class="apt-flag ${(p?.country||'BR').toLowerCase()}">${p?.country||'BR'}</div>
+  return `<div class="apt-item" onclick="openAptDetail('${esc(a.id)}')">
+    <div class="apt-time">${esc(a.time)}</div>
+    <div class="apt-flag ${(p?.country||'BR').toLowerCase()}">${esc(p?.country||'BR')}</div>
     <div class="apt-info">
-      <div class="apt-name">${p?.name||'Paciente'}</div>
-      <div class="apt-sub">${a.type}${compact?'':' · '+a.freq}</div>
+      <div class="apt-name">${esc(p?.name||'Paciente')}</div>
+      <div class="apt-sub">${esc(a.type)}${compact?'':' · '+esc(a.freq)}</div>
     </div>
     <div class="apt-dot ${dotClass}"></div>
     <div class="apt-chevron">›</div>
@@ -1376,13 +1391,13 @@ function renderPatients() {
     wrap.innerHTML = '<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Nenhum paciente</div><div class="empty-sub">Toque em + para adicionar</div></div>';
     return;
   }
-  wrap.innerHTML = filtered.map(p => `<div class="patient-item" onclick="openPatientDetail('${p.id}')">
-    <div class="patient-avatar">${initials(p.name)}</div>
+  wrap.innerHTML = filtered.map(p => `<div class="patient-item" onclick="openPatientDetail('${esc(p.id)}')">
+    <div class="patient-avatar">${esc(initials(p.name))}</div>
     <div style="flex:1;min-width:0">
-      <div class="patient-name">${p.country==='PT'?'🇵🇹':'🇧🇷'} ${p.name}</div>
-      <div class="patient-sub">${p.city||''}${p.wa?' · '+p.wa:''}</div>
+      <div class="patient-name">${p.country==='PT'?'🇵🇹':'🇧🇷'} ${esc(p.name)}</div>
+      <div class="patient-sub">${esc(p.city||'')}${p.wa?' · '+esc(p.wa):''}</div>
     </div>
-    <div class="patient-value">${p.value}€</div>
+    <div class="patient-value">${esc(p.value)}€</div>
     <div style="font-size:18px;color:var(--border)">›</div>
   </div>`).join('');
 }
@@ -1408,35 +1423,38 @@ function openAptDetail(id) {
   document.getElementById('sheet-detail-title').textContent = p.name;
   document.getElementById('sheet-detail-body').innerHTML = `
     <div class="detail-header">
-      <div class="detail-avatar">${initials(p.name)}</div>
+      <div class="detail-avatar">${esc(initials(p.name))}</div>
       <div>
-        <div class="detail-name">${p.name}</div>
-        <div class="detail-sub">${p.country==='PT'?'🇵🇹':'🇧🇷'} ${p.city||''} · ${a.freq}</div>
+        <div class="detail-name">${esc(p.name)}</div>
+        <div class="detail-sub">${p.country==='PT'?'🇵🇹':'🇧🇷'} ${esc(p.city||'')} · ${esc(a.freq)}</div>
       </div>
     </div>
-    <div class="detail-field"><div class="detail-field-icon">📅</div><div><div class="detail-field-lbl">Data</div><div class="detail-field-val">${day}</div></div></div>
+    <div class="detail-field"><div class="detail-field-icon">📅</div><div><div class="detail-field-lbl">Data</div><div class="detail-field-val">${esc(day)}</div></div></div>
 
     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;margin:12px 0;display:flex;justify-content:space-around">
-      <div style="text-align:center"><div style="font-size:24px">🇵🇹</div><div style="font-size:26px;font-weight:700;color:var(--accent)">${timePt}</div><div style="font-size:11px;color:var(--text-muted)">Portugal</div></div>
+      <div style="text-align:center"><div style="font-size:24px">🇵🇹</div><div style="font-size:26px;font-weight:700;color:var(--accent)">${esc(timePt)}</div><div style="font-size:11px;color:var(--text-muted)">Portugal</div></div>
       <div style="display:flex;align-items:center;color:var(--text-muted);font-size:20px">↔</div>
-      <div style="text-align:center"><div style="font-size:24px">🇧🇷</div><div style="font-size:26px;font-weight:700;color:var(--accent)">${timeBr}</div><div style="font-size:11px;color:var(--text-muted)">Brasília</div></div>
+      <div style="text-align:center"><div style="font-size:24px">🇧🇷</div><div style="font-size:26px;font-weight:700;color:var(--accent)">${esc(timeBr)}</div><div style="font-size:11px;color:var(--text-muted)">Brasília</div></div>
     </div>
 
-    <div class="detail-field"><div class="detail-field-icon">📞</div><div><div class="detail-field-lbl">WhatsApp</div><div class="detail-field-val" style="color:var(--accent)">${p.wa}</div></div></div>
-    <div class="detail-field"><div class="detail-field-icon">💻</div><div><div class="detail-field-lbl">Meet</div><div class="detail-field-val" style="color:var(--accent)">${a.meet||p.meet||'—'}</div></div></div>
+    <div class="detail-field"><div class="detail-field-icon">📞</div><div><div class="detail-field-lbl">WhatsApp</div><div class="detail-field-val" style="color:var(--accent)">${esc(p.wa)}</div></div></div>
+    <div class="detail-field"><div class="detail-field-icon">💻</div><div><div class="detail-field-lbl">Meet</div><div class="detail-field-val" style="color:var(--accent)">${esc(a.meet||p.meet||'—')}</div></div></div>
     <div class="detail-field"><div class="detail-field-icon">📋</div><div><div class="detail-field-lbl">Status</div><div class="detail-field-val">${statusLabel}</div></div></div>
-    ${p.notes?`<div class="detail-field"><div class="detail-field-icon">📝</div><div><div class="detail-field-lbl">Notas</div><div class="detail-field-val">${p.notes}</div></div></div>`:''}
+    ${p.notes?`<div class="detail-field"><div class="detail-field-icon">📝</div><div><div class="detail-field-lbl">Notas</div><div class="detail-field-val">${esc(p.notes)}</div></div></div>`:''}
 
     <div style="margin-top:16px">
       <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:8px">MENSAGEM WHATSAPP</div>
-      <textarea id="wa-msg-preview" style="width:100%;min-height:140px;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;line-height:1.6;font-family:inherit;background:var(--bg);resize:vertical">${waMsg}</textarea>
+      <textarea id="wa-msg-preview" style="width:100%;min-height:140px;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;line-height:1.6;font-family:inherit;background:var(--bg);resize:vertical"></textarea>
     </div>
   `;
+  // Usar textContent para o textarea evita XSS na mensagem WhatsApp
+  const ta = document.getElementById('wa-msg-preview');
+  if (ta) ta.value = waMsg;
   document.getElementById('sheet-detail-foot').innerHTML = `
-    <button class="btn btn-wa" style="flex:2" onclick="sendWa('${p.wa}')">💬 WhatsApp</button>
+    <button class="btn btn-wa" style="flex:2" onclick="sendWa('${esc(p.wa)}')">💬 WhatsApp</button>
     <button class="btn btn-outline" style="flex:1" onclick="copyWaMsg()">📋 Copiar</button>
-    <a class="btn btn-outline btn-sm" title="Adicionar ao Google Calendar" href="${makeGcalUrl(a, p)}" target="_blank" rel="noopener" style="text-decoration:none">📅</a>
-    <button class="btn btn-danger btn-sm" onclick="cancelApt('${a.id}')">✕</button>
+    <a class="btn btn-outline btn-sm" title="Adicionar ao Google Calendar" href="${esc(makeGcalUrl(a, p))}" target="_blank" rel="noopener" style="text-decoration:none">📅</a>
+    <button class="btn btn-danger btn-sm" onclick="cancelApt('${esc(a.id)}')">✕</button>
   `;
   openSheet('sheet-detail');
 }
@@ -1448,22 +1466,22 @@ function openPatientDetail(id) {
   document.getElementById('sheet-detail-title').textContent = p.name;
   document.getElementById('sheet-detail-body').innerHTML = `
     <div class="detail-header">
-      <div class="detail-avatar">${initials(p.name)}</div>
+      <div class="detail-avatar">${esc(initials(p.name))}</div>
       <div>
-        <div class="detail-name">${p.name}</div>
-        <div class="detail-sub">${p.country==='PT'?'🇵🇹':'🇧🇷'} ${p.city||''}</div>
+        <div class="detail-name">${esc(p.name)}</div>
+        <div class="detail-sub">${p.country==='PT'?'🇵🇹':'🇧🇷'} ${esc(p.city||'')}</div>
       </div>
     </div>
-    <div class="detail-field"><div class="detail-field-icon">📞</div><div><div class="detail-field-lbl">WhatsApp</div><div class="detail-field-val" style="color:var(--accent)">${p.wa}</div></div></div>
-    <div class="detail-field"><div class="detail-field-icon">💰</div><div><div class="detail-field-lbl">Valor</div><div class="detail-field-val">${p.value}€ · ${p.payment}</div></div></div>
-    ${p.meet?`<div class="detail-field"><div class="detail-field-icon">💻</div><div><div class="detail-field-lbl">Meet</div><div class="detail-field-val" style="color:var(--accent)">${p.meet}</div></div></div>`:''}
-    ${nextApt?`<div class="detail-field"><div class="detail-field-icon">📅</div><div><div class="detail-field-lbl">Próxima</div><div class="detail-field-val">${nextApt.date} às ${nextApt.time}</div></div></div>`:''}
-    ${p.notes?`<div class="detail-field"><div class="detail-field-icon">📝</div><div><div class="detail-field-lbl">Notas</div><div class="detail-field-val">${p.notes}</div></div></div>`:''}
+    <div class="detail-field"><div class="detail-field-icon">📞</div><div><div class="detail-field-lbl">WhatsApp</div><div class="detail-field-val" style="color:var(--accent)">${esc(p.wa)}</div></div></div>
+    <div class="detail-field"><div class="detail-field-icon">💰</div><div><div class="detail-field-lbl">Valor</div><div class="detail-field-val">${esc(p.value)}€ · ${esc(p.payment)}</div></div></div>
+    ${p.meet?`<div class="detail-field"><div class="detail-field-icon">💻</div><div><div class="detail-field-lbl">Meet</div><div class="detail-field-val" style="color:var(--accent)">${esc(p.meet)}</div></div></div>`:''}
+    ${nextApt?`<div class="detail-field"><div class="detail-field-icon">📅</div><div><div class="detail-field-lbl">Próxima</div><div class="detail-field-val">${esc(nextApt.date)} às ${esc(nextApt.time)}</div></div></div>`:''}
+    ${p.notes?`<div class="detail-field"><div class="detail-field-icon">📝</div><div><div class="detail-field-lbl">Notas</div><div class="detail-field-val">${esc(p.notes)}</div></div></div>`:''}
   `;
   document.getElementById('sheet-detail-foot').innerHTML = `
-    <button class="btn btn-wa" style="flex:1" onclick="sendWa('${p.wa}')">💬 WA</button>
-    <button class="btn btn-secondary" style="flex:1" onclick="closeSheet('sheet-detail');openEditPatient('${p.id}')">✏️ Editar</button>
-    <button class="btn btn-danger btn-sm" onclick="deletePatient('${p.id}')">🗑</button>
+    <button class="btn btn-wa" style="flex:1" onclick="sendWa('${esc(p.wa)}')">💬 WA</button>
+    <button class="btn btn-secondary" style="flex:1" onclick="closeSheet('sheet-detail');openEditPatient('${esc(p.id)}')">✏️ Editar</button>
+    <button class="btn btn-danger btn-sm" onclick="deletePatient('${esc(p.id)}')">🗑</button>
   `;
   openSheet('sheet-detail');
 }
@@ -1485,7 +1503,7 @@ function openNewApt(date) {
 
 function populatePatientSelect(selId) {
   document.getElementById('apt-patient').innerHTML = '<option value="">Selecionar...</option>' +
-    patients.map(p=>`<option value="${p.id}"${p.id===selId?' selected':''}>${p.country==='PT'?'🇵🇹':'🇧🇷'} ${p.name}</option>`).join('');
+    patients.map(p=>`<option value="${esc(p.id)}"${p.id===selId?' selected':''}>${p.country==='PT'?'🇵🇹':'🇧🇷'} ${esc(p.name)}</option>`).join('');
 }
 
 function onPatientChange() {
