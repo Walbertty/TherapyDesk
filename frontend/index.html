@@ -92,7 +92,7 @@
     .content {
       flex: 1; overflow-y: auto; overflow-x: hidden;
       padding: 16px;
-      padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+      padding-bottom: var(--content-pb, max(calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px), calc(var(--nav-h) + 88px)));
       -webkit-overflow-scrolling: touch;
     }
 
@@ -2475,6 +2475,31 @@ buildPrefixOptions();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
+
+// ── BOTTOM PADDING DINÂMICO ──────────────────────────────────────────────────
+// Mede a altura real da barra de navegação após o render e define --content-pb.
+// Funciona em iOS (com env safe-area), Android com botões, Android com gestos,
+// e tablets independentemente da resolução.
+function updateBottomPad() {
+  const nav = document.querySelector('.bottom-nav');
+  if (!nav) return;
+  // offsetHeight já inclui o padding env(safe-area-inset-bottom) no iOS
+  const navH = nav.offsetHeight;
+  // visualViewport.height é a altura visível real (exclui teclado, barras do browser)
+  // Em Android com barra de sistema dentro do viewport, bottom() > visualViewport.height
+  const vvh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  const navRect = nav.getBoundingClientRect();
+  // Se a base do nav ultrapassa o visual viewport, esse overflow é a barra de sistema
+  const sysBarH = Math.max(0, navRect.bottom - vvh);
+  const pb = navH + sysBarH + 24;
+  document.documentElement.style.setProperty('--content-pb', pb + 'px');
+}
+window.addEventListener('resize', updateBottomPad);
+window.addEventListener('orientationchange', () => setTimeout(updateBottomPad, 350));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', updateBottomPad);
+// Após o primeiro paint para garantir que a nav já está posicionada
+requestAnimationFrame(() => { updateBottomPad(); setTimeout(updateBottomPad, 300); });
+// ────────────────────────────────────────────────────────────────────────────
 </script>
 </body>
 </html>
