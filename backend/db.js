@@ -56,6 +56,17 @@ async function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_apts_patient    ON appointments(patient_id);
     CREATE INDEX IF NOT EXISTS idx_apts_therapist  ON appointments(therapist_id);
     CREATE INDEX IF NOT EXISTS idx_patients_therapist ON patients(therapist_id);
+
+    CREATE TABLE IF NOT EXISTS password_resets (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email       TEXT NOT NULL,
+      token       TEXT NOT NULL UNIQUE,
+      expires_at  TIMESTAMPTZ NOT NULL,
+      used        BOOLEAN DEFAULT FALSE,
+      created_at  TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_reset_token ON password_resets(token);
   `);
 
   console.log('✅ Schema OK');

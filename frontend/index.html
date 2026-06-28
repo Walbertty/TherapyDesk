@@ -265,7 +265,7 @@
     .form-textarea { min-height: 80px; resize: vertical; font-size: 15px; }
     /* ── PHONE INPUT COM PREFIXO ── */
     .phone-row { display: flex; gap: 8px; }
-    .phone-prefix { width: 130px; flex-shrink: 0; padding: 13px 8px; font-size: 14px; }
+    .phone-prefix { width: 160px; flex-shrink: 0; padding: 13px 8px; font-size: 14px; }
     .phone-number { flex: 1; }
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none; border-color: var(--accent);
@@ -523,6 +523,23 @@
       padding: 10px 14px; border-radius: var(--radius-sm);
       font-size: 13px; margin-bottom: 16px; display: none;
     }
+    .auth-success {
+      background: var(--success-bg); color: var(--success-text);
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      font-size: 13px; margin-bottom: 16px; display: none;
+    }
+    .auth-forgot-link {
+      display: block; text-align: center; margin-top: 14px;
+      font-size: 13px; color: var(--accent); cursor: pointer;
+      background: none; border: none; width: 100%; padding: 4px;
+    }
+    .auth-forgot-link:hover { text-decoration: underline; }
+    .auth-back-link {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-muted); cursor: pointer;
+      background: none; border: none; padding: 0 0 16px 0;
+    }
+    .auth-back-link:hover { color: var(--accent); }
 
     /* ── DESKTOP FALLBACK ── */
     @media (min-width: 600px) {
@@ -543,16 +560,30 @@
       <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Criar conta</button>
     </div>
     <div id="auth-error" class="auth-error"></div>
+    <div id="auth-success" class="auth-success"></div>
     <div id="auth-form-login">
       <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-input" id="login-email" placeholder="dra@email.com" autocomplete="email"></div>
       <div class="form-group"><label class="form-label">Senha</label><input type="password" class="form-input" id="login-password" placeholder="••••••••" autocomplete="current-password"></div>
       <button class="btn btn-primary" onclick="doLogin()" id="login-btn">Entrar</button>
+      <button class="auth-forgot-link" onclick="switchAuthTab('forgot')">Esqueci a senha</button>
     </div>
     <div id="auth-form-register" style="display:none">
       <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-input" id="reg-name" placeholder="Dra. Ana Silva" autocomplete="name"></div>
       <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-input" id="reg-email" placeholder="dra@email.com" autocomplete="email"></div>
       <div class="form-group"><label class="form-label">Senha <span style="color:var(--text-muted);font-weight:400">(mín. 8 caracteres)</span></label><input type="password" class="form-input" id="reg-password" placeholder="••••••••" autocomplete="new-password"></div>
       <button class="btn btn-primary" onclick="doRegister()" id="register-btn">Criar conta</button>
+    </div>
+    <div id="auth-form-forgot" style="display:none">
+      <button class="auth-back-link" onclick="switchAuthTab('login')">← Voltar ao login</button>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px">Insira o seu e-mail e enviaremos um link para redefinir a senha.</p>
+      <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-input" id="forgot-email" placeholder="dra@email.com" autocomplete="email"></div>
+      <button class="btn btn-primary" onclick="doForgotPassword()" id="forgot-btn">Enviar link de recuperação</button>
+    </div>
+    <div id="auth-form-reset" style="display:none">
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px">Escolha uma nova senha para a sua conta.</p>
+      <div class="form-group"><label class="form-label">Nova senha <span style="color:var(--text-muted);font-weight:400">(mín. 8 caracteres)</span></label><input type="password" class="form-input" id="reset-password" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="form-group"><label class="form-label">Confirmar nova senha</label><input type="password" class="form-input" id="reset-password2" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn btn-primary" onclick="doResetPassword()" id="reset-btn">Redefinir senha</button>
     </div>
   </div>
 </div>
@@ -897,21 +928,7 @@ Qualquer dúvida estou à disposição!</textarea>
       <div class="form-group">
         <label class="form-label">WhatsApp *</label>
         <div class="phone-row">
-          <select class="form-select phone-prefix" id="p-wa-prefix">
-            <option value="+55">🇧🇷 +55</option>
-            <option value="+351">🇵🇹 +351</option>
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+44">🇬🇧 +44</option>
-            <option value="+49">🇩🇪 +49</option>
-            <option value="+33">🇫🇷 +33</option>
-            <option value="+34">🇪🇸 +34</option>
-            <option value="+39">🇮🇹 +39</option>
-            <option value="+31">🇳🇱 +31</option>
-            <option value="+41">🇨🇭 +41</option>
-            <option value="+54">🇦🇷 +54</option>
-            <option value="+57">🇨🇴 +57</option>
-            <option value="+56">🇨🇱 +56</option>
-          </select>
+          <select class="form-select phone-prefix" id="p-wa-prefix"></select>
           <input type="tel" class="form-input phone-number" id="p-wa-number" placeholder="11 9 8765-4321">
         </div>
       </div>
@@ -1059,11 +1076,18 @@ async function apiDel(path) {
 
 // ── AUTH FUNCTIONS ────────────────────────────────────────────────────
 function switchAuthTab(tab) {
-  document.getElementById('auth-form-login').style.display  = tab === 'login'    ? '' : 'none';
-  document.getElementById('auth-form-register').style.display = tab === 'register' ? '' : 'none';
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  ['login','register','forgot','reset'].forEach(t => {
+    const el = document.getElementById('auth-form-'+t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  const tabs = document.querySelector('.auth-tabs');
+  if (tabs) tabs.style.display = (tab === 'forgot' || tab === 'reset') ? 'none' : '';
+  ['tab-login','tab-register'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === 'tab-'+tab);
+  });
   document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('auth-success').style.display = 'none';
 }
 
 function showAuthError(msg) {
@@ -1072,10 +1096,22 @@ function showAuthError(msg) {
   el.style.display = 'block';
 }
 
+function showAuthSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.style.display = '';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+const AUTH_BTN_LABELS = {
+  'login-btn': 'Entrar',
+  'register-btn': 'Criar conta',
+  'forgot-btn': 'Enviar link de recuperação',
+  'reset-btn': 'Redefinir senha',
+};
 function setAuthLoading(btnId, loading) {
   const btn = document.getElementById(btnId);
   btn.disabled = loading;
-  btn.textContent = loading ? 'Aguarde...' : (btnId === 'login-btn' ? 'Entrar' : 'Criar conta');
+  btn.textContent = loading ? 'Aguarde...' : (AUTH_BTN_LABELS[btnId] || 'OK');
 }
 
 async function doLogin() {
@@ -1112,6 +1148,45 @@ async function doRegister() {
     saveSession(data.token, data.user);
   } catch { showAuthError('Sem conexão com o servidor'); }
   finally { setAuthLoading('register-btn', false); }
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { showAuthError('Insira o seu e-mail'); return; }
+  setAuthLoading('forgot-btn', true);
+  try {
+    const r = await fetch(API + '/auth/forgot-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await r.json();
+    if (!r.ok) { showAuthError(data.error || 'Erro ao enviar e-mail'); return; }
+    showAuthSuccess('✉️ E-mail enviado! Verifique a sua caixa de entrada e spam.');
+    document.getElementById('forgot-email').value = '';
+  } catch { showAuthError('Sem conexão com o servidor'); }
+  finally { setAuthLoading('forgot-btn', false); }
+}
+
+async function doResetPassword() {
+  const token = new URLSearchParams(window.location.search).get('reset');
+  const pass1 = document.getElementById('reset-password').value;
+  const pass2 = document.getElementById('reset-password2').value;
+  if (!pass1 || !pass2) { showAuthError('Preencha os dois campos'); return; }
+  if (pass1.length < 8) { showAuthError('Senha deve ter no mínimo 8 caracteres'); return; }
+  if (pass1 !== pass2) { showAuthError('As senhas não coincidem'); return; }
+  setAuthLoading('reset-btn', true);
+  try {
+    const r = await fetch(API + '/auth/reset-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password: pass1 })
+    });
+    const data = await r.json();
+    if (!r.ok) { showAuthError(data.error || 'Link inválido ou expirado'); return; }
+    showAuthSuccess('✅ Senha redefinida com sucesso! Pode fazer login agora.');
+    history.replaceState(null, '', window.location.pathname); // remove ?reset= da URL
+    setTimeout(() => switchAuthTab('login'), 2000);
+  } catch { showAuthError('Sem conexão com o servidor'); }
+  finally { setAuthLoading('reset-btn', false); }
 }
 
 function saveSession(token, user) {
@@ -1431,6 +1506,205 @@ async function cancelApt(id) {
   showToast('Consulta cancelada','info');
 }
 
+// ── LISTA DE PAÍSES (prefixo telefónico) ──────────────────────────────
+const ALL_COUNTRIES = [
+  { f:'🇧🇷', c:'+55',   n:'Brasil' },
+  { f:'🇵🇹', c:'+351',  n:'Portugal' },
+  { f:'🇦🇫', c:'+93',   n:'Afeganistão' },
+  { f:'🇿🇦', c:'+27',   n:'África do Sul' },
+  { f:'🇦🇱', c:'+355',  n:'Albânia' },
+  { f:'🇩🇿', c:'+213',  n:'Argélia' },
+  { f:'🇩🇪', c:'+49',   n:'Alemanha' },
+  { f:'🇦🇩', c:'+376',  n:'Andorra' },
+  { f:'🇦🇴', c:'+244',  n:'Angola' },
+  { f:'🇦🇬', c:'+1268', n:'Antígua e Barbuda' },
+  { f:'🇦🇷', c:'+54',   n:'Argentina' },
+  { f:'🇦🇲', c:'+374',  n:'Arménia' },
+  { f:'🇦🇺', c:'+61',   n:'Austrália' },
+  { f:'🇦🇹', c:'+43',   n:'Áustria' },
+  { f:'🇦🇿', c:'+994',  n:'Azerbaijão' },
+  { f:'🇧🇸', c:'+1242', n:'Bahamas' },
+  { f:'🇧🇩', c:'+880',  n:'Bangladesh' },
+  { f:'🇧🇧', c:'+1246', n:'Barbados' },
+  { f:'🇧🇭', c:'+973',  n:'Barém' },
+  { f:'🇧🇾', c:'+375',  n:'Bielorrússia' },
+  { f:'🇧🇪', c:'+32',   n:'Bélgica' },
+  { f:'🇧🇿', c:'+501',  n:'Belize' },
+  { f:'🇧🇯', c:'+229',  n:'Benim' },
+  { f:'🇧🇹', c:'+975',  n:'Butão' },
+  { f:'🇧🇴', c:'+591',  n:'Bolívia' },
+  { f:'🇧🇦', c:'+387',  n:'Bósnia e Herzegovina' },
+  { f:'🇧🇼', c:'+267',  n:'Botswana' },
+  { f:'🇧🇳', c:'+673',  n:'Brunei' },
+  { f:'🇧🇬', c:'+359',  n:'Bulgária' },
+  { f:'🇧🇫', c:'+226',  n:'Burquina Fasso' },
+  { f:'🇧🇮', c:'+257',  n:'Burundi' },
+  { f:'🇨🇻', c:'+238',  n:'Cabo Verde' },
+  { f:'🇰🇭', c:'+855',  n:'Camboja' },
+  { f:'🇨🇲', c:'+237',  n:'Camarões' },
+  { f:'🇨🇦', c:'+1',    n:'Canadá' },
+  { f:'🇶🇦', c:'+974',  n:'Catar' },
+  { f:'🇰🇿', c:'+7',    n:'Cazaquistão' },
+  { f:'🇹🇩', c:'+235',  n:'Chade' },
+  { f:'🇨🇱', c:'+56',   n:'Chile' },
+  { f:'🇨🇳', c:'+86',   n:'China' },
+  { f:'🇨🇾', c:'+357',  n:'Chipre' },
+  { f:'🇨🇴', c:'+57',   n:'Colômbia' },
+  { f:'🇰🇲', c:'+269',  n:'Comoros' },
+  { f:'🇨🇬', c:'+242',  n:'Congo' },
+  { f:'🇨🇩', c:'+243',  n:'Congo (RDC)' },
+  { f:'🇰🇵', c:'+850',  n:'Coreia do Norte' },
+  { f:'🇰🇷', c:'+82',   n:'Coreia do Sul' },
+  { f:'🇨🇮', c:'+225',  n:'Costa do Marfim' },
+  { f:'🇨🇷', c:'+506',  n:'Costa Rica' },
+  { f:'🇭🇷', c:'+385',  n:'Croácia' },
+  { f:'🇨🇺', c:'+53',   n:'Cuba' },
+  { f:'🇩🇰', c:'+45',   n:'Dinamarca' },
+  { f:'🇩🇯', c:'+253',  n:'Djibuti' },
+  { f:'🇩🇲', c:'+1767', n:'Dominica' },
+  { f:'🇩🇴', c:'+1809', n:'República Dominicana' },
+  { f:'🇪🇨', c:'+593',  n:'Equador' },
+  { f:'🇪🇬', c:'+20',   n:'Egito' },
+  { f:'🇸🇻', c:'+503',  n:'El Salvador' },
+  { f:'🇦🇪', c:'+971',  n:'Emirados Árabes Unidos' },
+  { f:'🇪🇷', c:'+291',  n:'Eritreia' },
+  { f:'🇸🇰', c:'+421',  n:'Eslováquia' },
+  { f:'🇸🇮', c:'+386',  n:'Eslovénia' },
+  { f:'🇪🇸', c:'+34',   n:'Espanha' },
+  { f:'🇺🇸', c:'+1',    n:'Estados Unidos' },
+  { f:'🇪🇪', c:'+372',  n:'Estónia' },
+  { f:'🇸🇿', c:'+268',  n:'Essuatíni' },
+  { f:'🇪🇹', c:'+251',  n:'Etiópia' },
+  { f:'🇫🇯', c:'+679',  n:'Fiji' },
+  { f:'🇵🇭', c:'+63',   n:'Filipinas' },
+  { f:'🇫🇮', c:'+358',  n:'Finlândia' },
+  { f:'🇫🇷', c:'+33',   n:'França' },
+  { f:'🇬🇦', c:'+241',  n:'Gabão' },
+  { f:'🇬🇲', c:'+220',  n:'Gâmbia' },
+  { f:'🇬🇳', c:'+224',  n:'Guiné' },
+  { f:'🇬🇼', c:'+245',  n:'Guiné-Bissau' },
+  { f:'🇬🇶', c:'+240',  n:'Guiné Equatorial' },
+  { f:'🇬🇭', c:'+233',  n:'Gana' },
+  { f:'🇬🇪', c:'+995',  n:'Geórgia' },
+  { f:'🇬🇩', c:'+1473', n:'Granada' },
+  { f:'🇬🇷', c:'+30',   n:'Grécia' },
+  { f:'🇬🇹', c:'+502',  n:'Guatemala' },
+  { f:'🇬🇾', c:'+592',  n:'Guiana' },
+  { f:'🇭🇹', c:'+509',  n:'Haiti' },
+  { f:'🇳🇱', c:'+31',   n:'Holanda' },
+  { f:'🇭🇳', c:'+504',  n:'Honduras' },
+  { f:'🇭🇺', c:'+36',   n:'Hungria' },
+  { f:'🇾🇪', c:'+967',  n:'Iémen' },
+  { f:'🇮🇳', c:'+91',   n:'Índia' },
+  { f:'🇮🇩', c:'+62',   n:'Indonésia' },
+  { f:'🇮🇷', c:'+98',   n:'Irão' },
+  { f:'🇮🇶', c:'+964',  n:'Iraque' },
+  { f:'🇮🇪', c:'+353',  n:'Irlanda' },
+  { f:'🇮🇸', c:'+354',  n:'Islândia' },
+  { f:'🇮🇱', c:'+972',  n:'Israel' },
+  { f:'🇮🇹', c:'+39',   n:'Itália' },
+  { f:'🇯🇲', c:'+1876', n:'Jamaica' },
+  { f:'🇯🇵', c:'+81',   n:'Japão' },
+  { f:'🇯🇴', c:'+962',  n:'Jordânia' },
+  { f:'🇰🇼', c:'+965',  n:'Kuwait' },
+  { f:'🇱🇦', c:'+856',  n:'Laos' },
+  { f:'🇱🇸', c:'+266',  n:'Lesoto' },
+  { f:'🇱🇻', c:'+371',  n:'Letónia' },
+  { f:'🇱🇧', c:'+961',  n:'Líbano' },
+  { f:'🇱🇷', c:'+231',  n:'Libéria' },
+  { f:'🇱🇾', c:'+218',  n:'Líbia' },
+  { f:'🇱🇮', c:'+423',  n:'Liechtenstein' },
+  { f:'🇱🇹', c:'+370',  n:'Lituânia' },
+  { f:'🇱🇺', c:'+352',  n:'Luxemburgo' },
+  { f:'🇲🇰', c:'+389',  n:'Macedónia do Norte' },
+  { f:'🇲🇬', c:'+261',  n:'Madagáscar' },
+  { f:'🇲🇼', c:'+265',  n:'Malaui' },
+  { f:'🇲🇾', c:'+60',   n:'Malásia' },
+  { f:'🇲🇻', c:'+960',  n:'Maldivas' },
+  { f:'🇲🇱', c:'+223',  n:'Mali' },
+  { f:'🇲🇹', c:'+356',  n:'Malta' },
+  { f:'🇲🇦', c:'+212',  n:'Marrocos' },
+  { f:'🇲🇷', c:'+222',  n:'Mauritânia' },
+  { f:'🇲🇺', c:'+230',  n:'Maurícia' },
+  { f:'🇲🇽', c:'+52',   n:'México' },
+  { f:'🇲🇿', c:'+258',  n:'Moçambique' },
+  { f:'🇲🇩', c:'+373',  n:'Moldávia' },
+  { f:'🇲🇨', c:'+377',  n:'Mónaco' },
+  { f:'🇲🇳', c:'+976',  n:'Mongólia' },
+  { f:'🇲🇪', c:'+382',  n:'Montenegro' },
+  { f:'🇲🇲', c:'+95',   n:'Myanmar' },
+  { f:'🇳🇦', c:'+264',  n:'Namíbia' },
+  { f:'🇳🇵', c:'+977',  n:'Nepal' },
+  { f:'🇳🇮', c:'+505',  n:'Nicarágua' },
+  { f:'🇳🇪', c:'+227',  n:'Níger' },
+  { f:'🇳🇬', c:'+234',  n:'Nigéria' },
+  { f:'🇳🇴', c:'+47',   n:'Noruega' },
+  { f:'🇳🇿', c:'+64',   n:'Nova Zelândia' },
+  { f:'🇴🇲', c:'+968',  n:'Omã' },
+  { f:'🇵🇦', c:'+507',  n:'Panamá' },
+  { f:'🇵🇬', c:'+675',  n:'Papua Nova Guiné' },
+  { f:'🇵🇾', c:'+595',  n:'Paraguai' },
+  { f:'🇵🇰', c:'+92',   n:'Paquistão' },
+  { f:'🇵🇪', c:'+51',   n:'Peru' },
+  { f:'🇵🇱', c:'+48',   n:'Polónia' },
+  { f:'🇵🇷', c:'+1787', n:'Porto Rico' },
+  { f:'🇷🇼', c:'+250',  n:'Ruanda' },
+  { f:'🇷🇴', c:'+40',   n:'Roménia' },
+  { f:'🇷🇺', c:'+7',    n:'Rússia' },
+  { f:'🇼🇸', c:'+685',  n:'Samoa' },
+  { f:'🇸🇲', c:'+378',  n:'San Marino' },
+  { f:'🇱🇨', c:'+1758', n:'Santa Lúcia' },
+  { f:'🇸🇹', c:'+239',  n:'São Tomé e Príncipe' },
+  { f:'🇻🇨', c:'+1784', n:'São Vicente e Granadinas' },
+  { f:'🇸🇳', c:'+221',  n:'Senegal' },
+  { f:'🇸🇱', c:'+232',  n:'Serra Leoa' },
+  { f:'🇷🇸', c:'+381',  n:'Sérvia' },
+  { f:'🇸🇨', c:'+248',  n:'Seychelles' },
+  { f:'🇸🇬', c:'+65',   n:'Singapura' },
+  { f:'🇸🇾', c:'+963',  n:'Síria' },
+  { f:'🇸🇴', c:'+252',  n:'Somália' },
+  { f:'🇱🇰', c:'+94',   n:'Sri Lanka' },
+  { f:'🇸🇩', c:'+249',  n:'Sudão' },
+  { f:'🇸🇸', c:'+211',  n:'Sudão do Sul' },
+  { f:'🇸🇪', c:'+46',   n:'Suécia' },
+  { f:'🇨🇭', c:'+41',   n:'Suíça' },
+  { f:'🇸🇷', c:'+597',  n:'Suriname' },
+  { f:'🇹🇭', c:'+66',   n:'Tailândia' },
+  { f:'🇹🇼', c:'+886',  n:'Taiwan' },
+  { f:'🇹🇯', c:'+992',  n:'Tajiquistão' },
+  { f:'🇹🇿', c:'+255',  n:'Tanzânia' },
+  { f:'🇹🇱', c:'+670',  n:'Timor-Leste' },
+  { f:'🇹🇬', c:'+228',  n:'Togo' },
+  { f:'🇹🇴', c:'+676',  n:'Tonga' },
+  { f:'🇹🇹', c:'+1868', n:'Trinidad e Tobago' },
+  { f:'🇹🇳', c:'+216',  n:'Tunísia' },
+  { f:'🇹🇲', c:'+993',  n:'Turquemenistão' },
+  { f:'🇹🇷', c:'+90',   n:'Turquia' },
+  { f:'🇹🇻', c:'+688',  n:'Tuvalu' },
+  { f:'🇺🇦', c:'+380',  n:'Ucrânia' },
+  { f:'🇺🇬', c:'+256',  n:'Uganda' },
+  { f:'🇺🇾', c:'+598',  n:'Uruguai' },
+  { f:'🇺🇿', c:'+998',  n:'Uzbequistão' },
+  { f:'🇻🇺', c:'+678',  n:'Vanuatu' },
+  { f:'🇻🇦', c:'+379',  n:'Vaticano' },
+  { f:'🇻🇪', c:'+58',   n:'Venezuela' },
+  { f:'🇻🇳', c:'+84',   n:'Vietname' },
+  { f:'🇬🇧', c:'+44',   n:'Reino Unido' },
+  { f:'🇿🇲', c:'+260',  n:'Zâmbia' },
+  { f:'🇿🇼', c:'+263',  n:'Zimbabué' },
+];
+
+// prefixos ordenados do mais longo ao mais curto (evitar +1 antes de +1242)
+const ALL_PREFIXES = [...new Set(ALL_COUNTRIES.map(c => c.c))].sort((a,b) => b.length - a.length);
+
+function buildPrefixOptions() {
+  const sel = document.getElementById('p-wa-prefix');
+  if (!sel) return;
+  sel.innerHTML = ALL_COUNTRIES.map(c =>
+    `<option value="${c.c}">${c.f} ${c.c} ${c.n}</option>`
+  ).join('');
+}
+
 // ── PATIENT CRUD ──────────────────────────────────────────────────────
 function onCountryChange() {
   const country = document.getElementById('p-country').value;
@@ -1457,8 +1731,7 @@ function openEditPatient(id) {
   document.getElementById('p-city').value = p.city||'';
   // Separa prefixo do número ao editar
   const waFull = p.wa || '';
-  const knownPrefixes = ['+351','+55','+1','+44','+49','+33','+34','+39','+31','+41','+54','+57','+56'];
-  const prefix = knownPrefixes.find(px => waFull.startsWith(px)) || '+55';
+  const prefix = ALL_PREFIXES.find(px => waFull.startsWith(px)) || '+55';
   document.getElementById('p-wa-prefix').value = prefix;
   document.getElementById('p-wa-number').value = waFull.replace(prefix,'').trim();
   document.getElementById('p-email').value = p.email||'';
@@ -1674,7 +1947,13 @@ if (TOKEN && currentUser) {
 } else {
   // Sem sessão — mostrar tela de login
   document.getElementById('auth-screen').classList.remove('hidden');
+  // Verificar se URL tem token de reset de senha
+  const resetToken = new URLSearchParams(window.location.search).get('reset');
+  if (resetToken) switchAuthTab('reset');
 }
+
+// Inicializar select de prefixo de países
+buildPrefixOptions();
 
 // PWA service worker
 if ('serviceWorker' in navigator) {
