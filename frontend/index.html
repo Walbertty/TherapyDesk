@@ -263,6 +263,10 @@
       -webkit-appearance: none; appearance: none;
     }
     .form-textarea { min-height: 80px; resize: vertical; font-size: 15px; }
+    /* ── PHONE INPUT COM PREFIXO ── */
+    .phone-row { display: flex; gap: 8px; }
+    .phone-prefix { width: 130px; flex-shrink: 0; padding: 13px 8px; font-size: 14px; }
+    .phone-number { flex: 1; }
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none; border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(107,72,224,.15);
@@ -282,7 +286,9 @@
     .sheet {
       width: 100%; background: var(--surface);
       border-radius: 20px 20px 0 0;
-      max-height: 92vh; display: flex; flex-direction: column;
+      /* svh = small viewport height: sempre considera a barra do browser visível (iOS Safari) */
+      max-height: 88svh; max-height: 88vh; /* fallback para browsers antigos */
+      display: flex; flex-direction: column;
       transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
       padding-bottom: env(safe-area-inset-bottom);
     }
@@ -885,10 +891,30 @@ Qualquer dúvida estou à disposição!</textarea>
       <div class="form-section">Dados pessoais</div>
       <div class="form-group"><label class="form-label">Nome completo *</label><input type="text" class="form-input" id="p-name" placeholder="João Almeida" autocomplete="off"></div>
       <div class="form-row-2">
-        <div class="form-group"><label class="form-label">País *</label><select class="form-select" id="p-country"><option value="BR">🇧🇷 Brasil</option><option value="PT">🇵🇹 Portugal</option></select></div>
+        <div class="form-group"><label class="form-label">País *</label><select class="form-select" id="p-country" onchange="onCountryChange()"><option value="BR">🇧🇷 Brasil</option><option value="PT">🇵🇹 Portugal</option><option value="OTHER">🌍 Outro</option></select></div>
         <div class="form-group"><label class="form-label">Cidade</label><input type="text" class="form-input" id="p-city" placeholder="São Paulo"></div>
       </div>
-      <div class="form-group"><label class="form-label">WhatsApp *</label><input type="tel" class="form-input" id="p-wa" placeholder="+55 11 9 8765-4321"></div>
+      <div class="form-group">
+        <label class="form-label">WhatsApp *</label>
+        <div class="phone-row">
+          <select class="form-select phone-prefix" id="p-wa-prefix">
+            <option value="+55">🇧🇷 +55</option>
+            <option value="+351">🇵🇹 +351</option>
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+44">🇬🇧 +44</option>
+            <option value="+49">🇩🇪 +49</option>
+            <option value="+33">🇫🇷 +33</option>
+            <option value="+34">🇪🇸 +34</option>
+            <option value="+39">🇮🇹 +39</option>
+            <option value="+31">🇳🇱 +31</option>
+            <option value="+41">🇨🇭 +41</option>
+            <option value="+54">🇦🇷 +54</option>
+            <option value="+57">🇨🇴 +57</option>
+            <option value="+56">🇨🇱 +56</option>
+          </select>
+          <input type="tel" class="form-input phone-number" id="p-wa-number" placeholder="11 9 8765-4321">
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">E-mail</label><input type="email" class="form-input" id="p-email" placeholder="joao@email.com"></div>
       <div class="form-section">Atendimento</div>
       <div class="form-row-2">
@@ -1406,11 +1432,18 @@ async function cancelApt(id) {
 }
 
 // ── PATIENT CRUD ──────────────────────────────────────────────────────
+function onCountryChange() {
+  const country = document.getElementById('p-country').value;
+  const prefixMap = { BR: '+55', PT: '+351' };
+  if (prefixMap[country]) document.getElementById('p-wa-prefix').value = prefixMap[country];
+}
+
 function openNewPatient() {
   editingPatientId = null;
   document.getElementById('sheet-patient-title').textContent = 'Novo paciente';
-  ['p-name','p-city','p-wa','p-email','p-value','p-meet','p-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['p-name','p-city','p-wa-number','p-email','p-value','p-meet','p-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('p-country').value='BR';
+  document.getElementById('p-wa-prefix').value='+55';
   document.getElementById('p-payment').value='Transferência';
   openSheet('sheet-patient');
 }
@@ -1422,7 +1455,12 @@ function openEditPatient(id) {
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-country').value = p.country;
   document.getElementById('p-city').value = p.city||'';
-  document.getElementById('p-wa').value = p.wa;
+  // Separa prefixo do número ao editar
+  const waFull = p.wa || '';
+  const knownPrefixes = ['+351','+55','+1','+44','+49','+33','+34','+39','+31','+41','+54','+57','+56'];
+  const prefix = knownPrefixes.find(px => waFull.startsWith(px)) || '+55';
+  document.getElementById('p-wa-prefix').value = prefix;
+  document.getElementById('p-wa-number').value = waFull.replace(prefix,'').trim();
   document.getElementById('p-email').value = p.email||'';
   document.getElementById('p-value').value = p.value;
   document.getElementById('p-payment').value = p.payment;
@@ -1433,7 +1471,9 @@ function openEditPatient(id) {
 
 async function savePatient() {
   const name = document.getElementById('p-name').value.trim();
-  const wa = document.getElementById('p-wa').value.trim();
+  const prefix = document.getElementById('p-wa-prefix').value;
+  const number = document.getElementById('p-wa-number').value.trim();
+  const wa = prefix + number; // número completo com prefixo
   const value = document.getElementById('p-value').value.trim();
   if (!name||!wa||!value) { showToast('Preencha nome, WhatsApp e valor','warn'); return; }
   const data = { name, whatsapp: wa, value, country:document.getElementById('p-country').value, city:document.getElementById('p-city').value, email:document.getElementById('p-email').value, payment:document.getElementById('p-payment').value, meet:document.getElementById('p-meet').value, notes:document.getElementById('p-notes').value };
