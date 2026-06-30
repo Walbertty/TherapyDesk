@@ -1097,9 +1097,15 @@ function handle401(status) {
   if (status === 401) { logout(); return true; }
   return false;
 }
+// Fetch com timeout de 12s — evita que requisições fiquem presas indefinidamente
+function fetchWithTimeout(url, opts = {}, ms = 12000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+}
 async function apiGet(path) {
   try {
-    const r = await fetch(API + path, { headers: authHeader() });
+    const r = await fetchWithTimeout(API + path, { headers: authHeader() });
     if (handle401(r.status)) return null;
     if (!r.ok) return null;
     return r.json();
@@ -1107,7 +1113,7 @@ async function apiGet(path) {
 }
 async function apiPost(path, data) {
   try {
-    const r = await fetch(API + path, { method:'POST', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
+    const r = await fetchWithTimeout(API + path, { method:'POST', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
     if (handle401(r.status)) return null;
     if (!r.ok) { console.warn('[apiPost]', path, r.status); return null; }
     return r.json();
@@ -1115,7 +1121,7 @@ async function apiPost(path, data) {
 }
 async function apiPut(path, data) {
   try {
-    const r = await fetch(API + path, { method:'PUT', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
+    const r = await fetchWithTimeout(API + path, { method:'PUT', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(data) });
     if (handle401(r.status)) return null;
     if (!r.ok) { console.warn('[apiPut]', path, r.status); return null; }
     return r.json();
@@ -1123,7 +1129,7 @@ async function apiPut(path, data) {
 }
 async function apiDel(path) {
   try {
-    const r = await fetch(API + path, { method:'DELETE', headers: authHeader() });
+    const r = await fetchWithTimeout(API + path, { method:'DELETE', headers: authHeader() });
     if (handle401(r.status)) return false;
     return true;
   } catch { return false; }

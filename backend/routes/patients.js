@@ -66,6 +66,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, country, city, whatsapp, email, value, payment, meet, notes } = req.body ?? {};
+    if (!name || !whatsapp) {
+      return res.status(400).json({ error: 'Nome e WhatsApp sao obrigatorios' });
+    }
     const { rows } = await pool.query(
       `UPDATE patients
        SET name=$1, country=$2, city=$3, whatsapp=$4, email=$5, value=$6, payment=$7, meet=$8, notes=$9

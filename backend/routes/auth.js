@@ -121,7 +121,8 @@ router.post('/forgot-password', async (req, res) => {
     res.json({ message: 'Se o e-mail estiver cadastrado, recebera um link em breve.' });
   } catch (err) {
     console.error('[forgot-password]', err.message);
-    res.status(500).json({ error: 'Erro ao enviar e-mail. Verifique a configuracao do Gmail.' });
+    // Retorna mensagem generica para nao vazar se o e-mail esta cadastrado
+    res.json({ message: 'Se o e-mail estiver cadastrado, recebera um link em breve.' });
   }
 });
 
@@ -139,8 +140,18 @@ router.post('/reset-password', async (req, res) => {
     if (!rows[0]) return res.status(400).json({ error: 'Link invalido ou expirado. Solicite um novo.' });
 
     const hash = await bcrypt.hash(password, 12);
-    await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, rows[0].email]);
-    await pool.query('UPDATE password_resets SET used = TRUE WHERE token = $1', [token]);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('UPDATE users SET password = $1 WHERE email = $2', [hash, rows[0].email]);
+      await client.query('UPDATE password_resets SET used = TRUE WHERE token = $1', [token]);
+      await client.query('COMMIT');
+    } catch (txErr) {
+      await client.query('ROLLBACK');
+      throw txErr;
+    } finally {
+      client.release();
+    }
 
     res.json({ message: 'Senha redefinida com sucesso!' });
   } catch (err) {
