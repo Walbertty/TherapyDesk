@@ -15,6 +15,9 @@ const isProd = process.env.NODE_ENV === 'production';
 // ── SEGURANÇA ─────────────────────────────────────────────────────────────
 app.use(helmet());
 
+// Necessário para o Railway (proxy reverso) — corrige o ValidationError do rate-limit
+app.set('trust proxy', 1);
+
 // Origens permitidas: FRONTEND_URL exato + qualquer preview do Vercel + localhost
 const ALLOWED_ORIGINS = [
   process.env.FRONTEND_URL,

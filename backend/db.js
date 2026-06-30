@@ -6,6 +6,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+// Prevent idle connection timeouts from crashing the process
+pool.on('error', (err) => {
+  console.error('[db] pool error (idle client):', err.message);
+});
+
 async function initSchema() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
