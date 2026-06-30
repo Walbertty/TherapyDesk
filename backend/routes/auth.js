@@ -27,10 +27,10 @@ router.post('/register', async (req, res) => {
   const { name, email, password } = req.body ?? {};
 
   if (!name || !email || !password) {
-    return res.status(400).json({ error: 'name, email e password são obrigatórios' });
+    return res.status(400).json({ error: 'name, email e password sao obrigatorios' });
   }
   if (password.length < 8) {
-    return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres' });
+    return res.status(400).json({ error: 'Senha deve ter no minimo 8 caracteres' });
   }
 
   try {
@@ -41,7 +41,7 @@ router.post('/register', async (req, res) => {
     );
     res.status(201).json({ token: signToken(rows[0]), user: rows[0] });
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'Email já cadastrado' });
+    if (err.code === '23505') return res.status(409).json({ error: 'Email ja cadastrado' });
     console.error('[register]', err.message);
     res.status(500).json({ error: 'Erro interno' });
   }
@@ -52,7 +52,7 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body ?? {};
 
   if (!email || !password) {
-    return res.status(400).json({ error: 'email e password são obrigatórios' });
+    return res.status(400).json({ error: 'email e password sao obrigatorios' });
   }
 
   try {
@@ -76,35 +76,33 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body ?? {};
-  if (!email) return res.status(400).json({ error: 'E-mail é obrigatório' });
+  if (!email) return res.status(400).json({ error: 'E-mail e obrigatorio' });
 
   try {
     const { rows } = await pool.query('SELECT id, name FROM users WHERE email = $1', [email.toLowerCase().trim()]);
-    // Sempre retorna sucesso (não revela se o email existe ou não)
-    if (!rows[0]) return res.json({ message: 'Se o e-mail estiver cadastrado, receberá um link em breve.' });
+    if (!rows[0]) return res.json({ message: 'Se o e-mail estiver cadastrado, recebera um link em breve.' });
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-    // Apagar tokens anteriores deste email
     await pool.query('DELETE FROM password_resets WHERE email = $1', [email.toLowerCase().trim()]);
     await pool.query(
       'INSERT INTO password_resets (email, token, expires_at) VALUES ($1, $2, $3)',
       [email.toLowerCase().trim(), token, expiresAt]
     );
 
-    const frontendUrl = process.env.FRONTEND_URL || 'https://therapy-desk-git-main-walberttys-projects.vercel.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://therapy-desk-brown.vercel.app';
     const resetLink = `${frontendUrl}?reset=${token}`;
 
     const mailer = createMailer();
     await mailer.sendMail({
       from: `"TherapyDesk" <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: 'Redefinição de senha — TherapyDesk',
+      subject: 'Redefinicao de senha - TherapyDesk',
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
           <h2 style="color:#6B48E0;margin-bottom:8px">TherapyDesk</h2>
-          <p>Olá, <strong>${rows[0].name}</strong>!</p>
+          <p>Ola, <strong>${rows[0].name}</strong>!</p>
           <p>Recebemos um pedido para redefinir a senha da sua conta.</p>
           <p style="margin:24px 0">
             <a href="${resetLink}"
@@ -113,32 +111,32 @@ router.post('/forgot-password', async (req, res) => {
             </a>
           </p>
           <p style="color:#666;font-size:13px">Este link expira em <strong>1 hora</strong>.</p>
-          <p style="color:#666;font-size:13px">Se não solicitou a redefinição, ignore este e-mail. A sua senha permanece a mesma.</p>
+          <p style="color:#666;font-size:13px">Se nao solicitou a redefinicao, ignore este e-mail.</p>
           <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-          <p style="color:#999;font-size:12px">TherapyDesk — Agenda inteligente para terapeutas</p>
+          <p style="color:#999;font-size:12px">TherapyDesk - Agenda inteligente para terapeutas</p>
         </div>
       `,
     });
 
-    res.json({ message: 'Se o e-mail estiver cadastrado, receberá um link em breve.' });
+    res.json({ message: 'Se o e-mail estiver cadastrado, recebera um link em breve.' });
   } catch (err) {
     console.error('[forgot-password]', err.message);
-    res.status(500).json({ error: 'Erro ao enviar e-mail. Verifique a configuração do Gmail.' });
+    res.status(500).json({ error: 'Erro ao enviar e-mail. Verifique a configuracao do Gmail.' });
   }
 });
 
 // POST /api/auth/reset-password
 router.post('/reset-password', async (req, res) => {
   const { token, password } = req.body ?? {};
-  if (!token || !password) return res.status(400).json({ error: 'Token e password são obrigatórios' });
-  if (password.length < 8) return res.status(400).json({ error: 'Senha deve ter no mínimo 8 caracteres' });
+  if (!token || !password) return res.status(400).json({ error: 'Token e password sao obrigatorios' });
+  if (password.length < 8) return res.status(400).json({ error: 'Senha deve ter no minimo 8 caracteres' });
 
   try {
     const { rows } = await pool.query(
       'SELECT * FROM password_resets WHERE token = $1 AND used = FALSE AND expires_at > NOW()',
       [token]
     );
-    if (!rows[0]) return res.status(400).json({ error: 'Link inválido ou expirado. Solicite um novo.' });
+    if (!rows[0]) return res.status(400).json({ error: 'Link invalido ou expirado. Solicite um novo.' });
 
     const hash = await bcrypt.hash(password, 12);
     await pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, rows[0].email]);
@@ -151,11 +149,16 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// GET /api/auth/me — valida token e devolve dados do usuário logado
+// GET /api/auth/me
 router.get('/me', require('../middleware/auth'), async (req, res) => {
-  const { rows } = await pool.query('SELECT id, name, email FROM users WHERE id = $1', [req.user.id]);
-  if (!rows[0]) return res.status(404).json({ error: 'Usuário não encontrado' });
-  res.json(rows[0]);
+  try {
+    const { rows } = await pool.query('SELECT id, name, email FROM users WHERE id = $1', [req.user.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Usuario nao encontrado' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('[auth/me]', err.message);
+    res.status(500).json({ error: 'Erro interno' });
+  }
 });
 
 module.exports = router;
