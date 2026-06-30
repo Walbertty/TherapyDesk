@@ -18,13 +18,26 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar.events'];
 router.get('/auth', (req, res) => {
   const { token } = req.query;
   if (!token) return res.status(400).json({ error: 'Token obrigatório' });
-  const url = getClient().generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    state: token,
-    prompt: 'consent',   // garante refresh_token mesmo se já autorizado antes
-  });
-  res.redirect(url);
+
+  // Verificar se as variáveis de ambiente foram configuradas
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) {
+    console.error('[google/auth] Variáveis de ambiente GOOGLE_* não configuradas');
+    return res.status(500).json({ error: 'Configuração Google incompleta no servidor. Contacte o administrador.' });
+  }
+
+  try {
+    const url = getClient().generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      state: token,
+      prompt: 'consent',   // garante refresh_token mesmo se já autorizado antes
+    });
+    res.redirect(url);
+  } catch (err) {
+    console.error('[google/auth] Erro ao gerar URL:', err.message);
+    const front = process.env.FRONTEND_URL || 'http://localhost:5500';
+    res.redirect(`${front}?google=error`);
+  }
 });
 
 // ── GET /api/google/callback ─────────────────────────────────────────────────
