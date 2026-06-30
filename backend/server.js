@@ -56,10 +56,8 @@ const authLimiter = rateLimit({
   message: { error: 'Muitas tentativas de autenticação. Tente novamente em 15 minutos.' },
 });
 
-// ── STATIC (produção) ─────────────────────────────────────────────────────
-if (isProd) {
-  app.use(express.static(path.join(__dirname, '..', 'frontend')));
-}
+// Frontend está no Vercel — o backend só serve a API
+// (static file serving removido para evitar erros no Railway)
 
 // ── ROTAS PÚBLICAS ────────────────────────────────────────────────────────
 app.use('/api/auth',   authLimiter, require('./routes/auth'));
@@ -71,12 +69,10 @@ app.use('/api/patients',     authMiddleware, require('./routes/patients'));
 app.use('/api/appointments', authMiddleware, require('./routes/appointments'));
 app.use('/api/settings',     authMiddleware, require('./routes/settings'));
 
-// ── SPA FALLBACK ──────────────────────────────────────────────────────────
-if (isProd) {
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-  });
-}
+// ── 404 para rotas desconhecidas ──────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
+});
 
 // ── ERROR HANDLER GLOBAL ──────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
