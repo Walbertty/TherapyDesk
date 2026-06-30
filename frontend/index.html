@@ -786,7 +786,7 @@
         <div class="settings-card" style="border-radius:var(--radius);box-shadow:var(--shadow)">
           <div class="integration-row">
             <div class="integration-icon" style="background:#EEF7EE">📅</div>
-            <div style="flex:1"><div class="integration-title">Google Agenda</div><div class="integration-sub">Sincronizar consultas</div></div>
+            <div style="flex:1"><div class="integration-title">Google Agenda</div><div class="integration-sub">Adicionar consultas com 1 clique</div></div>
             <label class="toggle"><input type="checkbox" id="tog-gcal" onchange="toggleGcal()"><span class="toggle-slider"></span></label>
           </div>
           <div id="gcal-connect" class="hidden" style="padding:10px 16px 14px;border-top:1px solid var(--border)">
@@ -797,6 +797,17 @@
               <span style="font-size:12px">Não é necessária nenhuma configuração.</span>
             </div>
           </div>
+
+          <!-- Google Meet OAuth -->
+          <div class="integration-row" style="border-top:1px solid var(--border)">
+            <div class="integration-icon" style="background:#E8F0FE">🎥</div>
+            <div style="flex:1">
+              <div class="integration-title">Google Meet</div>
+              <div class="integration-sub" id="google-meet-status">A verificar…</div>
+            </div>
+            <button id="google-meet-btn" class="btn btn-outline btn-sm" onclick="toggleGoogleMeet()" style="min-width:90px">…</button>
+          </div>
+
           <div class="integration-row">
             <div class="integration-icon" style="background:#E8F5E9">💬</div>
             <div style="flex:1"><div class="integration-title">WhatsApp</div><div class="integration-sub">Envio de mensagens</div></div>
@@ -933,7 +944,13 @@ Qualquer dúvida estou à disposição!</textarea>
       <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="apt-type"><option>Terapia cognitiva</option><option>Psicanálise</option><option>Terapia familiar</option><option>Sessão inicial</option><option>Acompanhamento</option></select></div>
       <div class="form-group"><label class="form-label">Frequência</label><select class="form-select" id="apt-freq"><option>Semanal</option><option>Quinzenal</option><option>Mensal</option><option>Único</option></select></div>
       <div class="form-group" id="apt-recur-row"><label class="form-label">Criar sessões recorrentes</label><select class="form-select" id="apt-recur"><option value="1">Apenas esta sessão</option><option value="4">4 semanas (1 mês)</option><option value="8">8 semanas (2 meses)</option><option value="12">12 semanas (3 meses)</option><option value="16">16 semanas (4 meses)</option></select></div>
-      <div class="form-group"><label class="form-label">Link Google Meet</label><input type="url" class="form-input" id="apt-meet" placeholder="meet.google.com/..."></div>
+      <div class="form-group">
+        <label class="form-label">Link Google Meet</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="url" class="form-input" id="apt-meet" placeholder="meet.google.com/..." style="flex:1">
+          <button type="button" class="btn btn-outline btn-sm" id="btn-gen-meet" onclick="generateMeetLink()" title="Gerar link automaticamente" style="white-space:nowrap;flex-shrink:0">🎥 Gerar</button>
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">Notas da sessão</label><textarea class="form-textarea" id="apt-notes" placeholder="Observações desta sessão..."></textarea></div>
       <div class="form-group" style="display:flex;align-items:center;gap:10px">
         <input type="checkbox" id="apt-send-wa" checked style="width:20px;height:20px;accent-color:var(--accent)">
@@ -1249,6 +1266,8 @@ function saveSession(token, user) {
   const info = document.getElementById('cfg-account-info');
   if (info) info.textContent = `Logado como ${user.name} (${user.email})`;
   showView('dashboard'); // sempre inicia no Dashboard
+  handleGoogleCallback(); // verifica retorno do OAuth (?google=connected)
+  checkGoogleStatus();    // atualiza UI do botão Connect/Disconnect
   loadData().then(() => {
     renderDashboard(); renderAgenda(); renderPatients();
     loadReminderSettings().then(() => { scheduleNotifications(); checkPaymentAlert(); });
@@ -2475,6 +2494,100 @@ buildPrefixOptions();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
+
+// ── GOOGLE MEET OAUTH ────────────────────────────────────────────────────────
+let googleConnected = false;
+
+async function checkGoogleStatus() {
+  try {
+    const r = await apiGet('/google/status');
+    googleConnected = r && r.connected;
+  } catch { googleConnected = false; }
+  updateGoogleUI();
+}
+
+function updateGoogleUI() {
+  const status = document.getElementById('google-meet-status');
+  const btn    = document.getElementById('google-meet-btn');
+  const genBtn = document.getElementById('btn-gen-meet');
+  if (status) status.textContent = googleConnected ? '🟢 Conectado' : '🔴 Não conectado';
+  if (btn) {
+    btn.textContent = googleConnected ? 'Desconectar' : 'Conectar';
+    btn.className   = googleConnected ? 'btn btn-danger btn-sm' : 'btn btn-outline btn-sm';
+    btn.style.minWidth = '90px';
+  }
+  if (genBtn) genBtn.style.display = googleConnected ? '' : 'none';
+}
+
+async function toggleGoogleMeet() {
+  if (googleConnected) {
+    if (!confirm('Desconectar o Google Meet?')) return;
+    await apiDel('/google/disconnect');
+    googleConnected = false;
+    updateGoogleUI();
+    showToast('Google Meet desconectado', 'info');
+  } else {
+    // Redireciona para o fluxo OAuth passando o JWT como parâmetro
+    const BACKEND = 'https://therapydesk-production.up.railway.app';
+    window.location.href = `${BACKEND}/api/google/auth?token=${encodeURIComponent(TOKEN)}`;
+  }
+}
+
+async function generateMeetLink() {
+  if (!googleConnected) {
+    showToast('Conecte o Google Meet primeiro nas Configurações', 'error'); return;
+  }
+  const date = document.getElementById('apt-date').value;
+  const time = document.getElementById('apt-time').value;
+  const pid  = document.getElementById('apt-patient').value;
+  if (!date || !time || !pid) {
+    showToast('Preencha data, hora e paciente primeiro', 'error'); return;
+  }
+  const patient = patients.find(p => p.id === pid);
+  if (!patient) return;
+
+  const btn = document.getElementById('btn-gen-meet');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+
+  try {
+    const dur = parseInt(document.getElementById('cfg-dur')?.value || '50');
+    const r   = await apiPost('/google/meet', {
+      date, time, patientName: patient.name, durationMin: dur
+    });
+    if (r && r.meetLink) {
+      document.getElementById('apt-meet').value = r.meetLink;
+      showToast('✅ Link Meet gerado!', 'success');
+    } else {
+      showToast('Erro ao gerar link. Tente novamente.', 'error');
+    }
+  } catch (err) {
+    if (err && err.status === 401) {
+      googleConnected = false; updateGoogleUI();
+      showToast('Sessão Google expirada. Reconecte nas Configurações.', 'error');
+    } else {
+      showToast('Erro ao gerar link Meet', 'error');
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🎥 Gerar'; }
+  }
+}
+
+// Verificar parâmetro ?google= na URL ao carregar (retorno do OAuth)
+function handleGoogleCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const g = params.get('google');
+  if (!g) return;
+  // Limpar o parâmetro da URL sem recarregar a página
+  window.history.replaceState({}, '', window.location.pathname);
+  if (g === 'connected') {
+    googleConnected = true;
+    updateGoogleUI();
+    showToast('✅ Google Meet conectado com sucesso!', 'success');
+  } else if (g === 'error') {
+    showToast('Erro ao conectar o Google. Tente novamente.', 'error');
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── BOTTOM PADDING DINÂMICO ──────────────────────────────────────────────────
 // Mede a altura real da barra de navegação após o render e define --content-pb.

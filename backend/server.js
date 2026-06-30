@@ -52,7 +52,8 @@ if (isProd) {
 }
 
 // ── ROTAS PÚBLICAS ────────────────────────────────────────────────────────
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth',   require('./routes/auth'));
+app.use('/api/google', require('./routes/google')); // OAuth callback é público; proteção interna
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
 // ── ROTAS PROTEGIDAS (JWT obrigatório) ────────────────────────────────────
