@@ -2465,6 +2465,8 @@ if (TOKEN && currentUser) {
   document.getElementById('cfg-name').value = currentUser.name || '';
   const info = document.getElementById('cfg-account-info');
   if (info) info.textContent = `Logado como ${currentUser.name} (${currentUser.email})`;
+  handleGoogleCallback(); // verifica retorno do OAuth (?google=connected)
+  checkGoogleStatus();    // atualiza UI do botão Connect/Disconnect
   renderDashboard();
   loadData().then(() => {
     renderDashboard(); renderAgenda(); renderPatients();
