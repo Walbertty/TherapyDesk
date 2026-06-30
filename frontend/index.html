@@ -1064,21 +1064,9 @@ Acesse pelo link: {link}
 
 Qualquer dúvida estou à disposição!`;
 
-// ── LOCAL STATE (fallback quando backend offline) ─────────────────────
-let patients = [
-  {id:'p1',name:'João Almeida',country:'BR',city:'São Paulo',wa:'+55 11 9 8765-0001',email:'',value:'70',payment:'PIX',meet:'meet.google.com/aaa-001',notes:'Ansiedade. Prefere manhã.'},
-  {id:'p2',name:'Maria Fernandes',country:'PT',city:'Lisboa',wa:'+351 91 234 5678',email:'',value:'90',payment:'MBWay',meet:'meet.google.com/aaa-002',notes:'Sessão inicial.'},
-  {id:'p3',name:'Carlos Rodrigues',country:'BR',city:'São Paulo',wa:'+55 11 9 8765-4321',email:'',value:'80',payment:'Transferência',meet:'meet.google.com/abc-xyz',notes:'Ansiedade generalizada.'},
-  {id:'p4',name:'Ana Costa',country:'PT',city:'Porto',wa:'+351 93 456 7890',email:'',value:'90',payment:'Transferência',meet:'meet.google.com/aaa-004',notes:'Evolução positiva.'},
-  {id:'p5',name:'Pedro Lima',country:'BR',city:'Brasília',wa:'+55 61 9 9876-5432',email:'',value:'70',payment:'PIX',meet:'meet.google.com/aaa-005',notes:'Pontual.'},
-];
-let appointments = [
-  {id:'a1',patientId:'p1',date:'2026-06-26',time:'09:00',type:'Terapia cognitiva',freq:'Semanal',status:'confirmed',meet:'meet.google.com/aaa-001',notes:''},
-  {id:'a2',patientId:'p2',date:'2026-06-26',time:'11:30',type:'Sessão inicial',freq:'Único',status:'pending',meet:'meet.google.com/aaa-002',notes:''},
-  {id:'a3',patientId:'p3',date:'2026-06-26',time:'14:00',type:'Terapia familiar',freq:'Quinzenal',status:'pending',meet:'meet.google.com/abc-xyz',notes:''},
-  {id:'a4',patientId:'p4',date:'2026-06-26',time:'16:00',type:'Terapia cognitiva',freq:'Semanal',status:'confirmed',meet:'meet.google.com/aaa-004',notes:''},
-  {id:'a5',patientId:'p5',date:'2026-06-26',time:'18:00',type:'Psicanálise',freq:'Semanal',status:'confirmed',meet:'meet.google.com/aaa-005',notes:''},
-];
+// ── LOCAL STATE ───────────────────────────────────────────────────────
+let patients = [];
+let appointments = [];
 
 let waTemplate = DEFAULT_TEMPLATE;
 let currentDate = new Date();
@@ -1693,12 +1681,16 @@ async function saveApt() {
     // Sessões recorrentes: criar N consultas semanalmente
     const recurCount = parseInt(document.getElementById('apt-recur')?.value || '1');
     const baseDate = new Date(date + 'T12:00:00');
+    let saved = 0;
     for (let i = 0; i < recurCount; i++) {
       const nd = new Date(baseDate); nd.setDate(baseDate.getDate() + i * 7);
       const r = await apiPost('/appointments', { ...data, date: nd.toISOString().slice(0,10) });
-      appointments.push(r || { ...data, date: nd.toISOString().slice(0,10), id: 'a'+Date.now()+i });
+      if (!r) { showToast(`Erro ao agendar sessão ${i + 1} de ${recurCount}`, 'error'); break; }
+      appointments.push(r);
+      saved++;
     }
-    showToast(recurCount > 1 ? `${recurCount} sessões agendadas! ✅` : 'Consulta agendada!', 'success');
+    if (!saved) return;
+    showToast(saved > 1 ? `${saved} sessões agendadas! ✅` : 'Consulta agendada!', 'success');
   }
   closeSheet('sheet-apt');
   currentDate = new Date(date+'T12:00:00');
@@ -2061,12 +2053,12 @@ function openPendingSheet() {
   } else {
     list.innerHTML = pending.map(a => {
       const p = patients.find(x => x.id === a.patientId);
-      const name = p?.name || 'Paciente';
+      const name = esc(p?.name || 'Paciente');
       return `
       <div class="apt-item" style="border-left:3px solid var(--warning)">
         <div class="apt-info">
           <div class="apt-name">${name}</div>
-          <div class="apt-meta">${a.date} · ${a.time}${a.type ? ' · '+a.type : ''}</div>
+          <div class="apt-meta">${esc(a.date)} · ${esc(a.time)}${a.type ? ' · '+esc(a.type) : ''}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
           <button class="btn btn-primary btn-sm" onclick="confirmApt('${a.id}')">✓</button>
@@ -2501,7 +2493,7 @@ let googleConnected = false;
 async function checkGoogleStatus() {
   try {
     const r = await apiGet('/google/status');
-    googleConnected = r && r.connected;
+    googleConnected = !!(r && r.connected);
   } catch { googleConnected = false; }
   updateGoogleUI();
 }

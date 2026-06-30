@@ -46,13 +46,23 @@ app.use(rateLimit({
 }));
 app.use(express.json({ limit: '10kb' }));
 
+// Rate limit específico para auth (protege contra brute force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20, // máx 20 tentativas por IP (não conta requests bem-sucedidas)
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas de autenticação. Tente novamente em 15 minutos.' },
+});
+
 // ── STATIC (produção) ─────────────────────────────────────────────────────
 if (isProd) {
   app.use(express.static(path.join(__dirname, '..', 'frontend')));
 }
 
 // ── ROTAS PÚBLICAS ────────────────────────────────────────────────────────
-app.use('/api/auth',   require('./routes/auth'));
+app.use('/api/auth',   authLimiter, require('./routes/auth'));
 app.use('/api/google', require('./routes/google')); // OAuth callback é público; proteção interna
 app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
