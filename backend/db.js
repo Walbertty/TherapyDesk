@@ -74,12 +74,12 @@ async function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_reset_token ON password_resets(token);
   `);
 
-  // Colunas adicionais (ALTER seguro, ignora se já existirem)
+  // Colunas adicionais (ALTER seguro, ignora se ja existirem)
   await pool.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS rem_sent_24h BOOLEAN DEFAULT FALSE`);
   await pool.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS rem_sent_1h  BOOLEAN DEFAULT FALSE`);
   await pool.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS paid         BOOLEAN DEFAULT FALSE`);
 
-  console.log('✅ Schema OK');
+  console.log('Schema OK');
 }
 
 module.exports = { pool, initSchema };
