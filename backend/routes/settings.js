@@ -27,19 +27,27 @@ router.get('/', async (req, res) => {
 
 // PUT /api/settings
 router.put('/', async (req, res) => {
+  const entries = Object.entries(req.body ?? {}).filter(([k]) => ALLOWED_KEYS.has(k));
+  if (entries.length === 0) return res.json({ ok: true });
+
+  const client = await pool.connect();
   try {
-    const entries = Object.entries(req.body ?? {}).filter(([k]) => ALLOWED_KEYS.has(k));
+    await client.query('BEGIN');
     for (const [k, v] of entries) {
-      await pool.query(
+      await client.query(
         `INSERT INTO settings (therapist_id, key, value) VALUES ($1,$2,$3)
          ON CONFLICT (therapist_id, key) DO UPDATE SET value=$3`,
         [req.user.id, k, JSON.stringify(v)]
       );
     }
+    await client.query('COMMIT');
     res.json({ ok: true });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('[settings PUT /]', err.message);
     res.status(500).json({ error: 'Erro ao salvar configuracoes' });
+  } finally {
+    client.release();
   }
 });
 

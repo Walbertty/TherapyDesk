@@ -86,23 +86,31 @@ router.post('/meet', auth, async (req, res) => {
   if (!date || !time || !patientName)
     return res.status(400).json({ error: 'date, time e patientName sao obrigatorios' });
 
-  const { rows } = await pool.query(
-    `SELECT value FROM settings WHERE therapist_id=$1 AND key='google_tokens'`,
-    [req.user.id]
-  );
-  if (!rows[0]) return res.status(400).json({ error: 'Google nao conectado' });
-
-  const tokens = JSON.parse(rows[0].value);
-  const client = getClient();
-  client.setCredentials(tokens);
-
-  client.on('tokens', async newTok => {
-    const merged = { ...tokens, ...newTok };
-    await pool.query(
-      `UPDATE settings SET value=$1 WHERE therapist_id=$2 AND key='google_tokens'`,
-      [JSON.stringify(merged), req.user.id]
+  let tokens, client;
+  try {
+    const { rows } = await pool.query(
+      `SELECT value FROM settings WHERE therapist_id=$1 AND key='google_tokens'`,
+      [req.user.id]
     );
-  });
+    if (!rows[0]) return res.status(400).json({ error: 'Google nao conectado' });
+    tokens = JSON.parse(rows[0].value);
+    client = getClient();
+    client.setCredentials(tokens);
+    client.on('tokens', async newTok => {
+      try {
+        const merged = { ...tokens, ...newTok };
+        await pool.query(
+          `UPDATE settings SET value=$1 WHERE therapist_id=$2 AND key='google_tokens'`,
+          [JSON.stringify(merged), req.user.id]
+        );
+      } catch (e) {
+        console.error('[google/meet] erro ao renovar tokens:', e.message);
+      }
+    });
+  } catch (err) {
+    console.error('[google/meet] erro ao carregar tokens:', err.message);
+    return res.status(500).json({ error: 'Erro ao carregar credenciais Google' });
+  }
 
   try {
     const calendar = google.calendar({ version: 'v3', auth: client });

@@ -114,6 +114,7 @@ async function sendPaymentAlerts() {
       JOIN patients p ON p.id = a.patient_id
       WHERE a.therapist_id = $1
         AND a.status = 'confirmed'
+        AND a.paid = FALSE
         AND a.date BETWEEN CURRENT_DATE - 7 AND CURRENT_DATE - 1
       ORDER BY a.date DESC, a.time
     `, [therapist.id]);

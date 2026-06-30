@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { pool } = require('../db');
+const { resetReminderFlags } = require('../cron/reminders');
 
 const map = (r) => ({
   id: r.id,
@@ -84,6 +85,9 @@ router.put('/:id', async (req, res) => {
     const notes     = b.notes   ?? e.notes  ?? '';
     const paid      = b.paid    !== undefined ? b.paid : (e.paid || false);
 
+    const dateChanged = b.date && b.date !== e.date;
+    const timeChanged = b.time && b.time !== String(e.time).slice(0, 5);
+
     const { rows } = await pool.query(
       `UPDATE appointments
        SET patient_id=$1, date=$2, time=$3, type=$4, freq=$5, status=$6, meet=$7, notes=$8, paid=$9
@@ -91,6 +95,14 @@ router.put('/:id', async (req, res) => {
        RETURNING *`,
       [patientId, date, time, type, freq, status, meet, notes, paid, req.params.id, req.user.id]
     );
+
+    // Se data ou hora mudou, repõe os flags de lembrete para re-enviar
+    if (dateChanged || timeChanged) {
+      await resetReminderFlags(req.params.id).catch(err =>
+        console.error('[appointments PUT] resetReminderFlags:', err.message)
+      );
+    }
+
     res.json(map(rows[0]));
   } catch (err) {
     console.error('[appointments PUT /:id]', err.message);
